@@ -1,0 +1,210 @@
+{
+	"verbose": {
+		"alias": "v",
+		"type": "boolean",
+		"description": "verbose output",
+		"default": false,
+		"global": true
+	},
+	"debug": {
+		"alias": "d",
+		"type": "boolean",
+		"description": "debug messages",
+		"default": false,
+		"global": true
+	},
+	"define": {
+		"alias": "D",
+		"description": "compilation defines",
+		"type": "string"
+	},
+	"file": {
+		"description": "file for upload",
+		"type": "string"
+	},
+	"sketch": {
+		"description": "sketch folder, config file or template name",
+		"alias": "s",
+		"type": "string"
+	},
+	"board": {
+		"description": "board identifier",
+		"alias": "b",
+		"type": "string"
+	},
+	"model": {
+		"description": "board model",
+		"alias": "m",
+		"type": "string"
+	},
+	"inc": {
+		"description": "include library dir",
+		"alias": "I",
+		"type": "string"
+	},
+	"arduino": {
+		"description": "arduino app location",
+		"env": "ARDUINO_APP",
+		"alias": "A",
+		"global": true,
+		"type": "string"
+	},
+	"dryRun": {
+		"alias": [
+			"n",
+			"dry-run"
+		],
+		"type": "boolean",
+		"description": "just show commands, don't do anything",
+		"default": false,
+		"global": true
+	},
+	"version": {
+		"description": "package version",
+		"run": "version"
+	},
+	"upload": {
+		"description": "compile, then upload hex file using provided port",
+		"run": [
+			"compile",
+			"showPorts",
+			"upload"
+		],
+		"arduino": true,
+		"runtimeRequired": true
+	},
+	"library": {
+		"description": "library management",
+		"refresh": {
+			"flow": "refreshPackages"
+		},
+		"add": {
+			"flow": "addPackage"
+		},
+		"install": {
+			"flow": "installPlatform"
+		},
+		"search": {
+			"flow": "searchPlatform"
+		},
+		"list": {
+			"flow": "listPlatforms"
+		},
+		"arduino": true,
+		"runtimeRequired": true
+	},
+	"platform": {
+		"description": "platform management",
+		"menu": {
+			"refresh": {
+				"flow": "refreshPackages"
+			},
+			"add": {
+				"flow": "addPackage"
+			},
+			"install": {
+				"flow": "installPlatform"
+			},
+			"search": {
+				"flow": "searchPlatform"
+			},
+			"list": {
+				"flow": "listPlatforms"
+			}
+		},
+		"arduino": true,
+		"runtimeRequired": true
+	},
+	"boards": {
+		"description": "show available boards",
+		"run": "showBoards",
+		"arduino": true
+	},
+	"ports": {
+		"description": "show com ports",
+		"run": "showPorts",
+		"arduino": true
+	},
+	"platform": {
+		"description": "platform manipulations: import, install, remove",
+		"run": "platform",
+		"arduino": true
+	},
+	"compile": {
+		"description": "compile sketch in provided dir",
+		"run": "compile",
+		"arduino": true,
+		"runtimeRequired": true,
+		"options": {
+			"define": true,
+			"inc": true,
+			"board": true,
+			"model": true,
+			"sketch": true
+		}
+	},
+	"test": {
+		"description": "run test",
+		"run": "test",
+		"arduino": true,
+		"runtimeRequired": true
+	},
+	"build": {
+		"run": "compile",
+		"arduino": true,
+		"runtimeRequired": true
+	},
+	"clean": {
+		"description": "clean compiled files",
+		"run": "clean",
+		"arduino": true
+	},
+	"prepare": {
+		"description": "[WIP] generate .cpp file from .ino",
+		"run": "prepare",
+		"arduino": true
+	},
+	"compile3": {
+		"run": [
+			"compile",
+			"compile",
+			"compile"
+		],
+		"arduino": true,
+		"runtimeRequired": true
+	},
+	"baudrate": {
+		"description": "serial port baudrate",
+		"alias": "r",
+		"type": "number"
+	},
+	"port": {
+		"description": "serial port",
+		"alias": "p",
+		"type": "string"
+	},
+	"console": {
+		"description": "serial console",
+		"run": [
+			"showPorts",
+			"console"
+		],
+		"flags": ["baudrate", "port"],
+		"arduino": true
+	},
+	"help": {
+		"alias": "h",
+		"anyway": true,
+		"banner": [
+			"Cuwire is a command-line toolkit to work with microcontrollers.",
+			"",
+			"It is intended to replace Arduino IDE UI for those who prefer to work in",
+			"terminal or want to integrate Arduino development in a 3rd party IDE.",
+			"",
+			"Cuwire can build sketches, libraries, upload firmwares, establish",
+			"serial communication.",
+			"",
+			"Commands:"
+		]
+	}
+}
