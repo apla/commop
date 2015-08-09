@@ -68,9 +68,11 @@ describe (baseName+" parse command options", function () {
 });
 
 describe (baseName+" parse command options with conflicts", function () {
-	it.skip ("have only defined options", function () {
+	it ("have only defined options", function () {
 		var cmd = optParser.findCommand (["console", "--port", "/dev/cuXXX", "--board", "uno"]);
-		assert (!("port" in cmd.options), "port conficts with board");
+		console.log (cmd);
+		assert ("port" in cmd.failedOptions, "port conficts with board");
+		assert ("board" in cmd.failedOptions, "board conficts with port");
 
 	});
 });
@@ -80,6 +82,5 @@ describe (baseName+" parse aliased options", function () {
 		var cmd = optParser.findCommand (["console", "-b", "uno", "-A", "/Applications/Arduino.app"]);
 		assert ("board" in cmd.options, "board option defined");
 		assert ("arduino" in cmd.options, "arduino option defined");
-
 	});
 });

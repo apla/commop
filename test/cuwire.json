@@ -190,7 +190,7 @@
 			"showPorts",
 			"console"
 		],
-		"options": ["board", "baudrate", "port"],
+		"options": {"board": {"conflicts": ["port"]}, "baudrate": null, "port": null},
 		"arduino": true
 	},
 	"help": {

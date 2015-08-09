@@ -101,8 +101,9 @@ ArgvParser.prototype.validateOptions = function validateOptions (conf, cmdConf, 
 		} else if (option in cmdOptions) {
 			// console.log ('option %s is an object', option);
 			// local override for conflicts
-			if (cmdOptions[option].conflicts)
+			if (cmdOptions[option] && cmdOptions[option].conflicts) {
 				conflicts = cmdOptions[option].conflicts;
+			}
 		} else {
 			continue;
 		}
@@ -114,8 +115,8 @@ ArgvParser.prototype.validateOptions = function validateOptions (conf, cmdConf, 
 		conflicts.forEach (function (conflictOpt) {
 			if (options[conflictOpt]) {
 				console.error ("option %s conflicts with %s", option, conflictOpt);
-				failed[conflictOpt] = true;
-				failed[option] = true;
+				failed[conflictOpt] = "conflict";
+				failed[option] = "conflict";
 			}
 		});
 
@@ -127,9 +128,12 @@ ArgvParser.prototype.validateOptions = function validateOptions (conf, cmdConf, 
 	}
 
 	for (var optName in cmdOptions) {
-		var required = cmdOptions[optName];
+		var required = cmdOptions[optName] === true;
+		if (cmdOptions[optName] && cmdOptions[optName].required) {
+			required = true;
+		}
 		if (required && !(optName in valid)) {
-			failed[optName] = true;
+			failed[optName] = "required";
 		}
 	}
 
@@ -164,7 +168,8 @@ ArgvParser.prototype.findCommand = function (options) {
 	//if (!Object.keys(options.failed).length) {
 		return {
 			command: haveCmd,
-			options: options.valid
+			options: options.valid,
+			failedOptions: options.failed
 		};
 	//}
 
