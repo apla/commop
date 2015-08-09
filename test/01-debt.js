@@ -24,7 +24,7 @@ fs.readdirSync (packageDir).map (filesToRead.bind (this, 0, packageDir));
 
 // console.log (files);
 
-describe ("01 tech debt", function () {
+describe ("01-tech-debt", function () {
 	files.forEach (function (fileName) {
 		if (fileName.match (/^\./) || !fileName.match (/\.js$/)) {
 			return;

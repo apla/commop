@@ -96,9 +96,7 @@ ArgvParser.prototype.formatOption = function (option, optConf) {
 	if (optConf.type !== "boolean")
 		line += ' ' + "[" + optConf.type + "]";
 
-	line += "\t" + optConf.description;
-
-	return line;
+	return [line, optConf.description];
 }
 
 ArgvParser.prototype.usage = function () {
@@ -111,6 +109,10 @@ ArgvParser.prototype.usage = function () {
 
 	// TODO: launch help.(run/flow/script)
 
+	var maxCmdWidth =  0;
+	var maxOptWidth =  0;
+	var maxColWidth = 30;
+
 	var commands = [];
 	var options  = [];
 	for (var optName in this.config) {
@@ -120,21 +122,31 @@ ArgvParser.prototype.usage = function () {
 
 		// non global option
 		if (optConf.type) {
-			if (optConf.global)
-				options.push (this.formatOption (optName, optConf));
+			if (optConf.global) {
+				var optHelp = this.formatOption (optName, optConf);
+				maxOptWidth = Math.max (optHelp[0].length, maxOptWidth);
+				options.push (optHelp);
+			}
 			continue;
 		}
 
-		if (optConf.run || optConf.script || optConf.flow)
-			commands.push ("   " + optName + "\t" + optConf.description);
+		if (optConf.run || optConf.script || optConf.flow) {
+			maxCmdWidth = Math.max (optName.length + 3, maxCmdWidth);
+			commands.push (["   " + optName, optConf.description]);
+		}
 	}
+
+	function spaceFill (m, v) {for (var l = m + 3 - v[0].length; l--; v[0] += " "); return v[0] + v[1];}
+
+	var optSpaceFill = spaceFill.bind (this, maxOptWidth);
+	var cmdSpaceFill = spaceFill.bind (this, maxCmdWidth);
 
 	// TODO: cluster commands using some key from config.help
 	// TODO: check if banner and help exists
 	var usage = this.config.help.banner.concat (
-		commands.sort(),
+		commands.map (cmdSpaceFill).sort(),
 		"\nGlobal options:",
-		options.sort()
+		options.map (optSpaceFill).sort()
 	).join ("\n")
 
 	console.log (usage);
