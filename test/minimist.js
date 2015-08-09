@@ -2,7 +2,9 @@ var path   = require ('path');
 var fs     = require ('fs');
 var assert = require ('assert');
 
-var MiniParser = require ('../parser/minimist');
+var parserModule = process.env.PARCLI ? "../parser/" + process.env.PARCLI : "../";
+
+var OptionParser = require (parserModule);
 
 var baseName = path.basename (__filename, path.extname (__filename));
 // var testFile = path.join (__dirname, baseName + '.json');
@@ -12,7 +14,7 @@ var testConfig = require (testFile);
 
 var globalVerbose = process.env.VERBOSE || false;
 
-var optParser = new MiniParser (testConfig);
+var optParser = new OptionParser (testConfig);
 
 describe (baseName+" parse global options regardless of context", function () {
 
@@ -70,10 +72,8 @@ describe (baseName+" parse command options", function () {
 describe (baseName+" parse command options with conflicts", function () {
 	it ("have only defined options", function () {
 		var cmd = optParser.findCommand (["console", "--port", "/dev/cuXXX", "--board", "uno"]);
-		console.log (cmd);
 		assert ("port" in cmd.failedOptions, "port conficts with board");
 		assert ("board" in cmd.failedOptions, "board conficts with port");
-
 	});
 });
 
