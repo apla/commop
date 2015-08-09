@@ -131,6 +131,11 @@ ArgvParser.prototype.validateOptions = function validateOptions (conf, cmdConf, 
  * and validate that command options
  */
 ArgvParser.prototype.findCommand = function (options) {
+
+	if (!options || options.constructor === Array) {
+		options = this.parse (options);
+	}
+
 	var haveCommand;
 	var argvRemains  = options._;
 
