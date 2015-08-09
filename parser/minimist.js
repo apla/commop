@@ -72,33 +72,8 @@ MiniParser.prototype.parse = function (argv) {
 
 	var options = minimist (argv, this.miniOptions);
 
-	for (var k in this.config) {
-		// clean up options a little
-		var aliases = this.config[k].alias;
-		if (aliases) {
-			if (aliases.constructor !== Array)
-				aliases = [aliases];
-			aliases.forEach (function (aliasName) {
-				if (aliasName in options && aliasName !== k) {
-					options[k] = options[aliasName]; // not really needed, insurance for a yargs api changes
-					delete options[aliasName];
-				}
-			});
-		}
-
-		if (!this.config[k].env)
-			continue;
-		if (options[k])
-			continue;
-
-		var envVars = this.config[k].env;
-		if (envVars.constructor !== Array)
-			envVars = [envVars];
-		envVars.forEach (function (envVar) {
-			if (process.env[envVar])
-				options[k] = process.env[envVar];
-		});
-	}
+	this.cleanupAliases (options);
+	this.fillOptionsFromEnv (options);
 
 	return options;
 }

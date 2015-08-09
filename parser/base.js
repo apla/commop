@@ -78,6 +78,42 @@ ArgvParser.prototype.commandExists = function (config, possibleCmd, idx, cmdList
 	return cmdConf;
 }
 
+ArgvParser.prototype.cleanupAliases = function (options) {
+	for (var k in this.config) {
+		// clean up options a little
+		var aliases = this.config[k].alias;
+		if (aliases) {
+			if (aliases.constructor !== Array)
+				aliases = [aliases];
+			aliases.forEach (function (aliasName) {
+				if (aliasName in options && aliasName !== k) {
+					options[k] = options[aliasName]; // not really needed, insurance for a yargs api changes
+					delete options[aliasName];
+				}
+			});
+		}
+	}
+}
+
+ArgvParser.prototype.fillOptionsFromEnv = function (options) {
+	for (var k in this.config) {
+		if (!this.config[k].env)
+			continue;
+
+		// TODO: make override options from env configurable
+		if (options[k])
+			continue;
+
+		var envVars = this.config[k].env;
+		if (envVars.constructor !== Array)
+			envVars = [envVars];
+		envVars.forEach (function (envVar) {
+			if (process.env[envVar])
+				options[k] = process.env[envVar];
+		});
+	}
+}
+
 ArgvParser.prototype.validateOptions = function validateOptions (conf, cmdConf, options) {
 	// validate command options
 	var valid = {};
