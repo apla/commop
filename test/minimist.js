@@ -14,7 +14,7 @@ var globalVerbose = process.env.VERBOSE || false;
 
 var optParser = new MiniParser (testConfig);
 
-describe (baseName+" parse global flags regardless of context", function () {
+describe (baseName+" parse global options regardless of context", function () {
 
 	it ("have global boolean options", function () {
 		var cmd = optParser.findCommand (optParser.parse (["boards"]));
@@ -37,7 +37,7 @@ describe (baseName+" parse global flags regardless of context", function () {
 
 });
 
-describe (baseName+" parse global flags (simplified interface)", function () {
+describe (baseName+" parse global options (simplified interface)", function () {
 
 	it ("have global boolean options", function () {
 		var cmd = optParser.findCommand (["boards"]);
@@ -55,4 +55,31 @@ describe (baseName+" parse global flags (simplified interface)", function () {
 		assert ("arduino" in cmd.options, "have arduino global option");
 	});
 
+});
+
+describe (baseName+" parse command options", function () {
+	it ("have only defined options", function () {
+		var cmd = optParser.findCommand (["upload", "--port", "/dev/cuXXX"]);
+		assert ("port" in cmd.options, "have a port option");
+
+		cmd = optParser.findCommand (["compile", "--port", "/dev/cuXXX"]);
+		assert (!("port" in cmd.options), "don't have a port option");
+	});
+});
+
+describe (baseName+" parse command options with conflicts", function () {
+	it.skip ("have only defined options", function () {
+		var cmd = optParser.findCommand (["console", "--port", "/dev/cuXXX", "--board", "uno"]);
+		assert (!("port" in cmd.options), "port conficts with board");
+
+	});
+});
+
+describe (baseName+" parse aliased options", function () {
+	it ("have only defined options", function () {
+		var cmd = optParser.findCommand (["console", "-b", "uno", "-A", "/Applications/Arduino.app"]);
+		assert ("board" in cmd.options, "board option defined");
+		assert ("arduino" in cmd.options, "arduino option defined");
+
+	});
 });

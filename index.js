@@ -91,10 +91,21 @@ ArgvParser.prototype.validateOptions = function validateOptions (conf, cmdConf, 
 		var optConf = conf[option];
 		if (!optConf) continue;
 
-		// TODO: conflicts in global options
-		if (!(option in cmdOptions) && !optConf.global) continue; // just a list of applicable options
-
 		var conflicts = optConf.conflicts || [];
+
+		if (optConf.global) {
+			// console.log ('option %s is global', option);
+		} else if (cmdOptions.constructor === Array) {
+			if (cmdOptions.indexOf (option) === -1) continue;
+			// console.log ('option %s is an array item', option);
+		} else if (option in cmdOptions) {
+			// console.log ('option %s is an object', option);
+			// local override for conflicts
+			if (cmdOptions[option].conflicts)
+				conflicts = cmdOptions[option].conflicts;
+		} else {
+			continue;
+		}
 
 		if (conflicts && conflicts.constructor !== Array) {
 			conflicts = [conflicts];
@@ -184,70 +195,7 @@ ArgvParser.prototype.findCommand = function (options) {
 
 // TODO: usage generator
 
-function YargsParser (config) {
 
-	this.config = config;
-
-	var yargsOptions = this.getOptions ();
-	var commands = [];
-	for (var optName in config) {
-		if (!config[optName].description)
-			continue;
-		config[optName].run
-			? commands.push ("   " + optName + "\t" + config[optName].description)
-		: yargsOptions[optName] = config[optName];
-	}
-
-	yargs.usage (
-		config.help.banner.concat (commands.sort()).join ("\n"),
-		yargsOptions
-	);
-
-	yargs.help ('help', config.help.description);
-
-	this.config = config;
-
-}
-
-util.inherits (YargsParser, ArgvParser);
-
-YargsParser.prototype.parse = function (argv) {
-
-	if (!argv)
-		argv = process.argv.slice (2);
-
-	var options = yargs.parse (argv);
-
-	for (var k in this.config) {
-		// clean up options a little
-		var aliases = this.config[k].alias;
-		if (aliases) {
-			if (aliases.constructor !== Array)
-				aliases = [aliases];
-			aliases.forEach (function (aliasName) {
-				if (aliasName in options && aliasName !== k) {
-					options[k] = options[aliasName]; // not really needed, insurance for a yargs api changes
-					delete options[aliasName];
-				}
-			});
-		}
-
-		if (!this.config[k].env)
-			continue;
-		if (options[k])
-			continue;
-
-		var envVars = this.config[k].env;
-		if (envVars.constructor !== Array)
-			envVars = [envVars];
-		envVars.forEach (function (envVar) {
-			if (process.env[envVar])
-				options[k] = process.env[envVar];
-		});
-	}
-
-	return options;
-}
 
 var CommandLine = function (args) {
 	var options = initOptions ();

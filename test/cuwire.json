@@ -13,6 +13,23 @@
 		"default": false,
 		"global": true
 	},
+	"dryRun": {
+		"alias": [
+			"n",
+			"dry-run"
+		],
+		"type": "boolean",
+		"description": "just show commands, don't do anything",
+		"default": false,
+		"global": true
+	},
+	"arduino": {
+		"description": "arduino app location",
+		"env": "ARDUINO_APP",
+		"alias": "A",
+		"global": true,
+		"type": "string"
+	},
 	"define": {
 		"alias": "D",
 		"description": "compilation defines",
@@ -42,22 +59,15 @@
 		"alias": "I",
 		"type": "string"
 	},
-	"arduino": {
-		"description": "arduino app location",
-		"env": "ARDUINO_APP",
-		"alias": "A",
-		"global": true,
-		"type": "string"
+	"baudrate": {
+		"description": "serial port baudrate",
+		"alias": "r",
+		"type": "number"
 	},
-	"dryRun": {
-		"alias": [
-			"n",
-			"dry-run"
-		],
-		"type": "boolean",
-		"description": "just show commands, don't do anything",
-		"default": false,
-		"global": true
+	"port": {
+		"description": "serial port",
+		"alias": "p",
+		"type": "string"
 	},
 	"version": {
 		"description": "package version",
@@ -70,6 +80,7 @@
 			"showPorts",
 			"upload"
 		],
+		"options": ["file", "port", "baudrate"],
 		"arduino": true,
 		"runtimeRequired": true
 	},
@@ -173,23 +184,13 @@
 		"arduino": true,
 		"runtimeRequired": true
 	},
-	"baudrate": {
-		"description": "serial port baudrate",
-		"alias": "r",
-		"type": "number"
-	},
-	"port": {
-		"description": "serial port",
-		"alias": "p",
-		"type": "string"
-	},
 	"console": {
 		"description": "serial console",
 		"run": [
 			"showPorts",
 			"console"
 		],
-		"flags": ["baudrate", "port"],
+		"options": ["board", "baudrate", "port"],
 		"arduino": true
 	},
 	"help": {
