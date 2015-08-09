@@ -84,3 +84,12 @@ describe (baseName+" parse aliased options", function () {
 		assert ("arduino" in cmd.options, "arduino option defined");
 	});
 });
+
+describe (baseName+" parse nothing", function () {
+	it ("have usage", function () {
+		var cmd = optParser.findCommand ([]);
+
+		assert (!("options" in cmd), "options not exists in cmd");
+		assert ("usage" in cmd, "usage defined in cmd");
+	});
+});

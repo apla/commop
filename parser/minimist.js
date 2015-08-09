@@ -41,24 +41,6 @@ function MiniParser (config) {
 		alias: aliases
 	};
 
-	/*
-	var commands = [];
-	for (var optName in config) {
-		if (!config[optName].description)
-			continue;
-		config[optName].run
-			? commands.push ("   " + optName + "\t" + config[optName].description)
-		: yargsOptions[optName] = config[optName];
-	}
-
-	yargs.usage (
-		config.help.banner.concat (commands.sort()).join ("\n"),
-		yargsOptions
-	);
-
-	yargs.help ('help', config.help.description);
-	*/
-
 	this.config = config;
 
 }

@@ -78,6 +78,71 @@ ArgvParser.prototype.commandExists = function (config, possibleCmd, idx, cmdList
 	return cmdConf;
 }
 
+ArgvParser.prototype.formatOption = function (option, optConf) {
+	var names = [];
+	if (optConf.alias) {
+		names = names.concat (optConf.alias);
+	}
+
+	var optAliased = option.replace (/[A-Z]/g, "-$&").toLowerCase();
+	if (names.indexOf (optAliased) === -1) {
+		names.unshift (option);
+	}
+
+	var line = "   " + names.map (function (name, i) {
+		return (name.length === 1 ? "-" : "--") + name;
+	}).join (", ");
+
+	if (optConf.type !== "boolean")
+		line += ' ' + "[" + optConf.type + "]";
+
+	line += "\t" + optConf.description;
+
+	return line;
+}
+
+ArgvParser.prototype.usage = function () {
+
+	// here is the magic: if we have a help config and that config
+	// contains run/flow/script key, then user decided to generate
+	// usage and help messages on their own. if we don't have such keys,
+	// we're to implement usage using banner key and command help
+	// using command and options descriptions
+
+	// TODO: launch help.(run/flow/script)
+
+	var commands = [];
+	var options  = [];
+	for (var optName in this.config) {
+		var optConf = this.config[optName];
+		if (!optConf.description)
+			continue;
+
+		// non global option
+		if (optConf.type) {
+			if (optConf.global)
+				options.push (this.formatOption (optName, optConf));
+			continue;
+		}
+
+		if (optConf.run || optConf.script || optConf.flow)
+			commands.push ("   " + optName + "\t" + optConf.description);
+	}
+
+	// TODO: cluster commands using some key from config.help
+	// TODO: check if banner and help exists
+	var usage = this.config.help.banner.concat (
+		commands.sort(),
+		"\nGlobal options:",
+		options.sort()
+	).join ("\n")
+
+	console.log (usage);
+
+	return usage;
+}
+
+
 ArgvParser.prototype.cleanupAliases = function (options) {
 	for (var k in this.config) {
 		// clean up options a little
@@ -183,6 +248,8 @@ ArgvParser.prototype.validateOptions = function validateOptions (conf, cmdConf, 
  */
 ArgvParser.prototype.findCommand = function (options) {
 
+	this.cmd = undefined;
+
 	if (!options || options.constructor === Array) {
 		options = this.parse (options);
 	}
@@ -195,8 +262,8 @@ ArgvParser.prototype.findCommand = function (options) {
 	var haveCmd = this.cmd;
 
 	if (!haveCmd || haveCmd === true) {
-		this.showUsage ();
-		return;
+		var usage = this.usage ();
+		return {usage: usage};
 	}
 
 	var options = this.validateOptions (this.config, haveCmd, options);
@@ -343,21 +410,3 @@ CommandLine.prototype.launchCommand = function (cmdName, options) {
 }
 
 module.exports = ArgvParser;
-
-// var cli = new CommandLine ();
-/*
-
-var optParser = new YargsParser (cliConfig);
-
-var boardsCmd = optParser.findCommand (optParser.parse (["boards"]));
-
-console.log (boardsCmd);
-
-var uploadCmd = optParser.findCommand (optParser.parse (["compile", "--board", "uno", "--verbose"]));
-
-console.log (uploadCmd);
-
-var cleanCmd  = optParser.findCommand (optParser.parse (["clean", "--port", "COM3"]));
-
-console.log (cleanCmd);
-*/

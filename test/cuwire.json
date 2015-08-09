@@ -15,8 +15,7 @@
 	},
 	"dryRun": {
 		"alias": [
-			"n",
-			"dry-run"
+			"dry-run", "n"
 		],
 		"type": "boolean",
 		"description": "just show commands, don't do anything",
