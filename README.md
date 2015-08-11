@@ -35,10 +35,11 @@ $ npm install parcli
 ```
 
 ```javascript
+
 var parcli    = require ('parcli');
 var cmdConfig = require ('parcli.json');
 
-var command   = new parcli (cmdConfig).findCommand();
+var launcher = new parcli (cmdConfig);
 
 function compile (cmd, next) {
 	if (cmd.options.inc) {
@@ -49,7 +50,8 @@ function compile (cmd, next) {
 
 module.exports.compile = compile;
 
-command.run (module.exports);
+launcher.start (); // process.argv, module.exports
+
 ```
 
 I need to create cli for arduino. Tasks are `compile`, `upload` and `platform`.

@@ -45,10 +45,7 @@ function MiniParser (config) {
 
 util.inherits (MiniParser, ArgvParser);
 
-MiniParser.prototype.parse = function (argv) {
-
-	if (!argv)
-		argv = process.argv.slice (2);
+MiniParser.prototype.launchParser = function (argv) {
 
 	var options = minimist (argv, this.miniOptions);
 

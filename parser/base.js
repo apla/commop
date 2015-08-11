@@ -330,13 +330,26 @@ ArgvParser.prototype.validateOptions = function (conf, cmdConf, options) {
 
 }
 
+ArgvParser.prototype.parse = function (argv) {
+
+	delete this.errors;
+
+	// got uprepared argv
+	if (argv && argv[0] === process.argv[0] && argv[1] === process.argv[1])
+		argv = process.argv.slice (2);
+
+	if (!argv)
+		argv = process.argv.slice (2);
+
+	return this.launchParser (argv);
+}
+
+
 /**
  * After argv parsed, we need to find out which command to launch
  * and validate that command options
  */
 ArgvParser.prototype.findCommand = function (options) {
-
-	delete this.errors;
 
 	if (!options || options.constructor === Array) {
 		options = this.parse (options);
@@ -361,7 +374,7 @@ ArgvParser.prototype.findCommand = function (options) {
 
 	//if (!Object.keys(options.failed).length) {
 		return {
-			command: haveCmd,
+			config: haveCmd,
 			options: options.valid,
 			failedOptions: options.failed,
 			errors: this.errors
@@ -369,14 +382,14 @@ ArgvParser.prototype.findCommand = function (options) {
 	//}
 }
 
-ArgvParser.prototype.launch = function (cmd, origin, cb) {
+ArgvParser.prototype.start = function (cmd, origin, cb) {
 
 	// if we got argv, parse it first
 	if (cmd.constructor === Array) {
 		cmd = this.findCommand (cmd);
 	}
 
-	var cmdConf = cmd.command;
+	var cmdConf = cmd.config;
 
 	var data = {};
 

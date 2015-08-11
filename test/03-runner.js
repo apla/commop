@@ -36,19 +36,21 @@ require.main.console = function (cmdConf, data, next) {
 describe (baseName+" execute command handler", function () {
 
 	it ("single handler", function (done) {
-		var cmd = optParser.launch (["ports"], require.main, function (data) {
+		var cmd = optParser.start (["ports"], require.main, function (data) {
 			assert ("aaa" in data, "task stored 'aaa' key in data");
 			done();
 		});
 	});
 
 	it ("multihandler", function (done) {
-		var cmd = optParser.launch (["console"], require.main, function (data) {
+		var cmd = optParser.start (["console"], require.main, function (data) {
 			assert ("aaa" in data, "task stored 'aaa' key in data");
 			assert ("aaa" in data, "task stored 'bbb' key in data");
 			done();
 		});
 	});
 });
+
+
 
 // TODO: test script and flow keys

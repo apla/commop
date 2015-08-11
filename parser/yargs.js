@@ -31,10 +31,7 @@ function YargsParser (config) {
 
 util.inherits (YargsParser, ArgvParser);
 
-YargsParser.prototype.parse = function (argv) {
-
-	if (!argv)
-		argv = process.argv.slice (2);
+YargsParser.prototype.launchParser = function (argv) {
 
 	var options = yargs.parse (argv);
 

@@ -55,10 +55,7 @@ function DashDashParser (config) {
 
 util.inherits (DashDashParser, ArgvParser);
 
-DashDashParser.prototype.parse = function (argv) {
-
-	if (!argv)
-		argv = process.argv.slice (2);
+DashDashParser.prototype.launchParser = function (argv) {
 
 	var parser = dashdash.createParser({
 		options: this.dashDashOptions,
@@ -68,8 +65,7 @@ DashDashParser.prototype.parse = function (argv) {
 	try {
 		var options = parser.parse ({argv: argv, slice: 0});
 	} catch (e) {
-		console.error('foo: error: %s', e.message);
-		process.exit(1);
+		this.appendError ('parser error:', e.message);
 	}
 
 	// dashdash also return argv order
