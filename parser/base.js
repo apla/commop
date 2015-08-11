@@ -17,6 +17,7 @@ ArgvParser.l10nMessage = {
 	commandSubMissing: "command '%s' doesn't contain 'sub' key to define subcommand for %s",
 	globalOptions: "Global options:",
 	commands: "Commands",
+	taskError: "task '%s' error:",
 };
 
 /**
@@ -368,5 +369,37 @@ ArgvParser.prototype.findCommand = function (options) {
 	//}
 }
 
+ArgvParser.prototype.launch = function (cmd, origin, cb) {
+
+	// if we got argv, parse it first
+	if (cmd.constructor === Array) {
+		cmd = this.findCommand (cmd);
+	}
+
+	var cmdConf = cmd.command;
+
+	var data = {};
+
+	// TODO: add support for flow/script
+	var methodNames = [].concat (cmdConf.run);
+
+	var launchIdx = -1;
+
+	var launchNext = function (err) {
+		// probably need to stop on error?
+		if (err)
+			this.appendError (this.l10nMessage ("taskError"), methodNames[launchIdx], err);
+		launchIdx ++;
+		var methodName = methodNames[launchIdx];
+		if (methodName) {
+			origin[methodName](cmdConf, data, launchNext);
+		} else {
+			cb (data);
+		}
+	}.bind(this);
+
+	launchNext();
+
+}
 
 module.exports = ArgvParser;
