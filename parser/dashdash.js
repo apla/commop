@@ -12,6 +12,10 @@ function DashDashParser (config) {
 
 	this.config = config;
 
+	this.optionConfig = config.options;
+
+	this.commandConfig = config.commands;
+
 	var argvOptions = this.getOptions ();
 
 	// translate options:

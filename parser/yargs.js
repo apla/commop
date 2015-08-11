@@ -8,6 +8,12 @@ function YargsParser (config) {
 
 	this.config = config;
 
+	this.optionConfig = config.options;
+
+	this.commandConfig = config.commands;
+
+	return;
+
 	var yargsOptions = this.getOptions ();
 	var commands = [];
 	for (var optName in config) {
@@ -25,7 +31,6 @@ function YargsParser (config) {
 
 	yargs.help ('help', config.help.description);
 
-	this.config = config;
 
 }
 

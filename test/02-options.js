@@ -8,7 +8,7 @@ var OptionParser = require (parserModule);
 
 var baseName = path.basename (__filename, path.extname (__filename));
 // var testFile = path.join (__dirname, baseName + '.json');
-var testFile = path.join (__dirname, 'cuwire.json');
+var testFile = path.join (__dirname, 'cuwire-cli.json');
 
 var testConfig = require (testFile);
 

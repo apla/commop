@@ -8,7 +8,7 @@ var OptionParser = require (parserModule);
 
 var baseName = path.basename (__filename, path.extname (__filename));
 // var testFile = path.join (__dirname, baseName + '.json');
-var testFile = path.join (__dirname, 'cuwire.json');
+var testFile = path.join (__dirname, 'cuwire-cli.json');
 
 var testConfig = require (testFile);
 
@@ -17,6 +17,13 @@ var globalVerbose = process.env.VERBOSE || false;
 var optParser = new OptionParser (testConfig);
 
 require.main = require.main || {};
+
+require.main.arduino = function (cmdConf, data, next) {
+	setTimeout (function () {
+		data.arduino = true;
+		next ();
+	}, 10);
+}
 
 require.main.showPorts = function (cmdConf, data, next) {
 	setTimeout (function () {

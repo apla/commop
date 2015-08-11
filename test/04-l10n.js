@@ -12,15 +12,19 @@ var baseName = path.basename (__filename, path.extname (__filename));
 var testFile = path.join (__dirname, 'cuwire.json');
 
 var testConfig = {
-	verbose: {global: true, type: "boolean", description: "be verbose"},
-	opt1: {type: "boolean", description: "opt1"}, // XXX: it is fine to have some options non-localized?
-	opt2: {type: "boolean", description: "opt2"},
-	opt3: {type: "boolean", description: "opt3"},
-	cmd: {description: "cmd to run", run: "runCmd", options: {opt1: {"conflicts": "opt2"}, opt2: null, opt3: {"required": true}}},
-	cmdtree: {
-		description: "cmd with subcommands",
-		sub: {
-			"cmd": {description: "cmd from subtree to run", run: "runCmd"}
+	options: {
+		verbose: {global: true, type: "boolean", description: "be verbose"},
+		opt1: {type: "boolean", description: "opt1"}, // XXX: it is fine to have some options non-localized?
+		opt2: {type: "boolean", description: "opt2"},
+		opt3: {type: "boolean", description: "opt3"},
+	},
+	commands: {
+		cmd: {description: "cmd to run", run: "runCmd", options: {opt1: {"conflicts": "opt2"}, opt2: null, opt3: {"required": true}}},
+		cmdtree: {
+			description: "cmd with subcommands",
+			sub: {
+				"cmd": {description: "cmd from subtree to run", run: "runCmd"}
+			}
 		}
 	}
 };

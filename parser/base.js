@@ -26,8 +26,8 @@ ArgvParser.l10nMessage = {
 ArgvParser.prototype.getOptions = function () {
 	var options = {};
 
-	for (var k in this.config) {
-		var optsConf = this.config[k];
+	for (var k in this.optionConfig) {
+		var optsConf = this.optionConfig[k];
 		if ("type" in optsConf && "description" in optsConf) {
 			// seems like parameter to me
 			options[k] = optsConf;
@@ -68,7 +68,7 @@ ArgvParser.prototype.l10nDescription = function (str, description) {
 ArgvParser.prototype.commandExists = function (config, possibleCmd, idx, cmdList) {
 	// check if command exists in config
 
-	if (!this.config[possibleCmd]) {
+	if (!this.commandConfig[possibleCmd]) {
 		if (this.ignoreUnknownCommands) {
 			return;
 		}
@@ -76,7 +76,7 @@ ArgvParser.prototype.commandExists = function (config, possibleCmd, idx, cmdList
 		return true;
 	}
 
-	var cmdConf = this.config[possibleCmd];
+	var cmdConf = this.commandConfig[possibleCmd];
 
 	if ("type" in cmdConf) {
 		this.appendError (this.l10nMessage ("commandDefinedAsOption"), possibleCmd, possibleCmd);
@@ -157,25 +157,33 @@ ArgvParser.prototype.usage = function () {
 
 	var commands = [];
 	var options  = [];
-	for (var optName in this.config) {
-		var optConf = this.config[optName];
+	for (var optName in this.optionConfig) {
+		var optConf = this.optionConfig[optName];
+		// XXX: maybe warning?
 		if (!optConf.description)
 			continue;
 
 		// non global option
-		if (optConf.type) {
-			if (optConf.global) {
-				var optHelp = this.formatOption (optName, optConf);
-				maxOptWidth = Math.max (optHelp[0].length, maxOptWidth);
-				options.push (optHelp);
-			}
+		if (!optConf.type) {
+			// TODO: show error
 			continue;
 		}
 
-		if (optConf.run || optConf.script || optConf.flow) {
-			maxCmdWidth = Math.max (optName.length + 3, maxCmdWidth);
-			var l10nDescription = this.l10nDescription (optName, optConf.description);
-			commands.push (["   " + optName, l10nDescription]);
+		if (!optConf.global)
+			continue;
+
+		var optHelp = this.formatOption (optName, optConf);
+		maxOptWidth = Math.max (optHelp[0].length, maxOptWidth);
+		options.push (optHelp);
+
+	}
+
+	for (var cmdName in this.commandConfig) {
+		var cmdConf = this.commandConfig[cmdName];
+		if (cmdConf.run || cmdConf.script || cmdConf.flow) {
+			maxCmdWidth = Math.max (cmdName.length + 3, maxCmdWidth);
+			var l10nDescription = this.l10nDescription (cmdName, cmdConf.description);
+			commands.push (["   " + cmdName, l10nDescription]);
 		}
 	}
 
@@ -205,9 +213,9 @@ ArgvParser.prototype.usage = function () {
  * @param {Object} options from parser
  */
 ArgvParser.prototype.cleanupAliases = function (options) {
-	for (var k in this.config) {
+	for (var k in this.optionConfig) {
 		// clean up options a little
-		var aliases = this.config[k].alias;
+		var aliases = this.optionConfig[k].alias;
 		if (aliases) {
 			if (aliases.constructor !== Array)
 				aliases = [aliases];
@@ -226,15 +234,15 @@ ArgvParser.prototype.cleanupAliases = function (options) {
  * @param {Object} options from parser
  */
 ArgvParser.prototype.fillOptionsFromEnv = function (options) {
-	for (var k in this.config) {
-		if (!this.config[k].env)
+	for (var k in this.optionConfig) {
+		if (!this.optionConfig[k].env)
 			continue;
 
 		// TODO: make override options from env configurable
 		if (options[k])
 			continue;
 
-		var envVars = this.config[k].env;
+		var envVars = this.optionConfig[k].env;
 		if (envVars.constructor !== Array)
 			envVars = [envVars];
 		envVars.forEach (function (envVar) {
@@ -259,15 +267,16 @@ ArgvParser.prototype.appendError = function () {
 
 /**
  * Cleanup options and validate
- * @param   {Object} conf    global configuration object
  * @param   {Object} cmdConf command configuration
  * @param   {Object} options from parser
  * @returns {Object} with two keys: failed and valid options
  */
-ArgvParser.prototype.validateOptions = function (conf, cmdConf, options) {
+ArgvParser.prototype.validateOptions = function (cmdConf, options) {
 	// validate command options
 	var valid = {};
 	var failed = {};
+
+	var conf = this.optionConfig;
 
 	var cmdOptions = cmdConf.options || {};
 
@@ -370,7 +379,7 @@ ArgvParser.prototype.findCommand = function (options) {
 		return {usage: usage};
 	}
 
-	var options = this.validateOptions (this.config, haveCmd, options);
+	var options = this.validateOptions (haveCmd, options);
 
 	//if (!Object.keys(options.failed).length) {
 		return {
