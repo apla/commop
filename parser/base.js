@@ -48,7 +48,7 @@ ArgvParser.prototype.commandExists = function (config, possibleCmd, idx, cmdList
 	var cmdConf = this.config[possibleCmd];
 
 	if ("type" in cmdConf) {
-		console.error ("found command '%s', but in configuration '%s' defined as an option", possibleCmd, possibleCmd);
+		this.appendError ("found command '%s', but in configuration '%s' defined as an option", possibleCmd, possibleCmd);
 		return true;
 	}
 
@@ -56,12 +56,12 @@ ArgvParser.prototype.commandExists = function (config, possibleCmd, idx, cmdList
 	if (!cmdConf.run && !cmdConf.flow && !cmdConf.script) {
 
 		if (!cmdList[idx + 1]) {
-			console.error ("command '%s' doesn't contain 'run', 'flow' or 'script' key to define code to handle command", possibleCmd);
+			this.appendError ("command '%s' doesn't contain 'run', 'flow' or 'script' key to define code to handle command", possibleCmd);
 			return true;
 		}
 
 		if (!cmdConf.sub || !cmdConf.sub[cmdList[idx + 1]]) {
-			console.error ("command '%s' doesn't contain 'sub' key to define subcommand for %s", possibleCmd, cmdList[idx + 1]);
+			this.appendError ("command '%s' doesn't contain 'sub' key to define subcommand for %s", possibleCmd, cmdList[idx + 1]);
 			return true;
 		}
 
@@ -149,13 +149,13 @@ ArgvParser.prototype.usage = function () {
 
 	// TODO: cluster commands using some key from config.help
 	// TODO: check if banner and help exists
-	var usage = this.config.help.banner.concat (
-		commands.map (cmdSpaceFill).sort(),
+	var usage = [].concat (
+		this.config.help.banner,
 		"\nGlobal options:",
-		options.map (optSpaceFill).sort()
+		options.map (optSpaceFill).sort(),
+		"\nCommands:",
+		commands.map (cmdSpaceFill).sort()
 	).join ("\n")
-
-	console.log (usage);
 
 	return usage;
 }
@@ -206,6 +206,19 @@ ArgvParser.prototype.fillOptionsFromEnv = function (options) {
 }
 
 /**
+ * Append error
+ */
+ArgvParser.prototype.appendError = function () {
+	var string = util.format.apply (util, arguments);
+	if (this.verbose) {
+		console.error.apply (console, arguments);
+	}
+	this.errors = this.errors || [];
+	this.errors.push (string);
+}
+
+
+/**
  * Cleanup options and validate
  * @param   {Object} conf    global configuration object
  * @param   {Object} cmdConf command configuration
@@ -223,7 +236,10 @@ ArgvParser.prototype.validateOptions = function (conf, cmdConf, options) {
 		if (option === "_") continue;
 		if (option in failed) continue;
 		var optConf = conf[option];
-		if (!optConf) continue;
+		if (!optConf) {
+			this.appendError ("unexpected option %s", option);
+			continue;
+		}
 
 		var conflicts = optConf.conflicts || [];
 
@@ -281,7 +297,7 @@ ArgvParser.prototype.validateOptions = function (conf, cmdConf, options) {
  */
 ArgvParser.prototype.findCommand = function (options) {
 
-	this.cmd = undefined;
+	delete this.errors;
 
 	if (!options || options.constructor === Array) {
 		options = this.parse (options);
@@ -289,6 +305,9 @@ ArgvParser.prototype.findCommand = function (options) {
 
 	var haveCommand;
 	var argvRemains  = options._;
+
+	// TODO: avoid those class fields
+	delete this.cmd;
 
 	argvRemains.some (this.commandExists.bind (this, this.config));
 
@@ -305,7 +324,8 @@ ArgvParser.prototype.findCommand = function (options) {
 		return {
 			command: haveCmd,
 			options: options.valid,
-			failedOptions: options.failed
+			failedOptions: options.failed,
+			errors: this.errors
 		};
 	//}
 }
