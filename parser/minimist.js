@@ -4,8 +4,6 @@ var minimist = require ("minimist");
 
 var ArgvParser = require ("./base");
 
-// TODO: usage generator
-
 function MiniParser (config) {
 
 	this.config = config;
