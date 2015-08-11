@@ -9,6 +9,16 @@ function ArgvParser (config) {
 
 }
 
+ArgvParser.l10nMessage = {
+	optionConflict: "option '%s' conflicts with '%s'",
+	optionConfMissing: "unexpected option '%s'",
+	commandDefinedAsOption: "found command '%s', but in configuration '%s' defined as an option",
+	commandHandlerMissing: "command '%s' doesn't contain 'run', 'flow' or 'script' key to define code to handle command",
+	commandSubMissing: "command '%s' doesn't contain 'sub' key to define subcommand for %s",
+	globalOptions: "Global options:",
+	commands: "Commands",
+};
+
 /**
  * Gather all option configurations from config
  */
@@ -24,6 +34,26 @@ ArgvParser.prototype.getOptions = function () {
 	}
 
 	return options;
+}
+
+ArgvParser.prototype.l10nMessage = function (str) {
+	if (this.constructor.l10nMessage && this.constructor.l10nMessage[str]) {
+		return this.constructor.l10nMessage[str];
+	} else if (ArgvParser.l10nMessage[str]) {
+		return ArgvParser.l10nMessage[str];
+	} else {
+		return "l10n message:"+str
+	}
+}
+
+ArgvParser.prototype.l10nDescription = function (str, description) {
+	if (this.constructor.l10nDescription && this.constructor.l10nDescription[str]) {
+		return this.constructor.l10nDescription[str];
+	} else if (ArgvParser.l10nDescription && ArgvParser.l10nDescription[str]) {
+		return ArgvParser.l10nDescription[str];
+	} else {
+		return description
+	}
 }
 
 /**
@@ -48,7 +78,7 @@ ArgvParser.prototype.commandExists = function (config, possibleCmd, idx, cmdList
 	var cmdConf = this.config[possibleCmd];
 
 	if ("type" in cmdConf) {
-		this.appendError ("found command '%s', but in configuration '%s' defined as an option", possibleCmd, possibleCmd);
+		this.appendError (this.l10nMessage ("commandDefinedAsOption"), possibleCmd, possibleCmd);
 		return true;
 	}
 
@@ -56,12 +86,12 @@ ArgvParser.prototype.commandExists = function (config, possibleCmd, idx, cmdList
 	if (!cmdConf.run && !cmdConf.flow && !cmdConf.script) {
 
 		if (!cmdList[idx + 1]) {
-			this.appendError ("command '%s' doesn't contain 'run', 'flow' or 'script' key to define code to handle command", possibleCmd);
+			this.appendError (this.l10nMessage ("commandHandlerMissing"), possibleCmd);
 			return true;
 		}
 
 		if (!cmdConf.sub || !cmdConf.sub[cmdList[idx + 1]]) {
-			this.appendError ("command '%s' doesn't contain 'sub' key to define subcommand for %s", possibleCmd, cmdList[idx + 1]);
+			this.appendError (this.l10nMessage ("commandSubMissing"), possibleCmd, cmdList[idx + 1]);
 			return true;
 		}
 
@@ -95,11 +125,16 @@ ArgvParser.prototype.formatOption = function (option, optConf) {
 		return (name.length === 1 ? "-" : "--") + name;
 	}).join (", ");
 
+	// TODO: add support for alternate values type, like "type": ["yes", "no"]
 	if (optConf.type !== "boolean")
 		line += ' ' + "[" + optConf.type + "]";
 
-	return [line, optConf.description];
+	var l10nDescription = this.l10nDescription (option, optConf.description);
+
+	return [line, l10nDescription];
 }
+
+
 
 /**
  * Usage generator from options and commands
@@ -138,7 +173,8 @@ ArgvParser.prototype.usage = function () {
 
 		if (optConf.run || optConf.script || optConf.flow) {
 			maxCmdWidth = Math.max (optName.length + 3, maxCmdWidth);
-			commands.push (["   " + optName, optConf.description]);
+			var l10nDescription = this.l10nDescription (optName, optConf.description);
+			commands.push (["   " + optName, l10nDescription]);
 		}
 	}
 
@@ -150,10 +186,12 @@ ArgvParser.prototype.usage = function () {
 	// TODO: cluster commands using some key from config.help
 	// TODO: check if banner and help exists
 	var usage = [].concat (
-		this.config.help.banner,
-		"\nGlobal options:",
+		this.config.help && this.config.help.banner ? this.config.help.banner : "",
+		"",
+		this.l10nMessage ("globalOptions"),
 		options.map (optSpaceFill).sort(),
-		"\nCommands:",
+		"",
+		this.l10nMessage ("commands"),
 		commands.map (cmdSpaceFill).sort()
 	).join ("\n")
 
@@ -237,7 +275,7 @@ ArgvParser.prototype.validateOptions = function (conf, cmdConf, options) {
 		if (option in failed) continue;
 		var optConf = conf[option];
 		if (!optConf) {
-			this.appendError ("unexpected option %s", option);
+			this.appendError (this.l10nMessage ("optionConfMissing"), option);
 			continue;
 		}
 
@@ -264,11 +302,11 @@ ArgvParser.prototype.validateOptions = function (conf, cmdConf, options) {
 
 		conflicts.forEach (function (conflictOpt) {
 			if (options[conflictOpt]) {
-				console.error ("option %s conflicts with %s", option, conflictOpt);
+				console.error (this.l10nMessage ("optionConflict"), option, conflictOpt);
 				failed[conflictOpt] = "conflict";
 				failed[option] = "conflict";
 			}
-		});
+		}.bind (this));
 
 		if (!failed[option]) {
 			valid[option] = options[option];
