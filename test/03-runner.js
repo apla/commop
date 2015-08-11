@@ -33,17 +33,25 @@ require.main.console = function (cmdConf, data, next) {
 }
 
 
-describe (baseName+" execute command handler", function () {
+describe (baseName+" execute command with", function () {
+
+	it ("no handler", function (done) {
+		var cmd = optParser.start ([], require.main, function (cmd, data) {
+			assert ("usage" in cmd, "no handler for no command, can display usage");
+			done();
+			return false;
+		});
+	});
 
 	it ("single handler", function (done) {
-		var cmd = optParser.start (["ports"], require.main, function (data) {
+		var cmd = optParser.start (["ports"], require.main, function (cmd, data) {
 			assert ("aaa" in data, "task stored 'aaa' key in data");
 			done();
 		});
 	});
 
 	it ("multihandler", function (done) {
-		var cmd = optParser.start (["console"], require.main, function (data) {
+		var cmd = optParser.start (["console"], require.main, function (cmd, data) {
 			assert ("aaa" in data, "task stored 'aaa' key in data");
 			assert ("aaa" in data, "task stored 'bbb' key in data");
 			done();

@@ -385,11 +385,21 @@ ArgvParser.prototype.findCommand = function (options) {
 ArgvParser.prototype.start = function (cmd, origin, cb) {
 
 	// if we got argv, parse it first
-	if (cmd.constructor === Array) {
+	if (!cmd || cmd.constructor === Array) {
 		cmd = this.findCommand (cmd);
 	}
 
+	if ("usage" in cmd) {
+		var showUsage = cb (cmd);
+		if (showUsage || showUsage === undefined)
+			console.log (cmd.usage);
+		return;
+	}
+
 	var cmdConf = cmd.config;
+
+	if (!origin)
+		origin = require.main;
 
 	var data = {};
 
@@ -405,9 +415,9 @@ ArgvParser.prototype.start = function (cmd, origin, cb) {
 		launchIdx ++;
 		var methodName = methodNames[launchIdx];
 		if (methodName) {
-			origin[methodName](cmdConf, data, launchNext);
+			origin[methodName] (cmd, data, launchNext);
 		} else {
-			cb (data);
+			cb (cmd, data);
 		}
 	}.bind(this);
 
