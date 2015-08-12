@@ -420,6 +420,8 @@ ArgvParser.prototype.start = function (cmd, origin, cb) {
 		cmd = this.findCommand (cmd);
 	}
 
+	if (!cb) cb = function () {}
+
 	if ("usage" in cmd) {
 		var showUsage = cb (cmd);
 		if (showUsage || showUsage === undefined)
@@ -452,7 +454,7 @@ ArgvParser.prototype.start = function (cmd, origin, cb) {
 		}
 	}.bind(this);
 
-	launchNext();
+	launchNext (null);
 
 }
 
