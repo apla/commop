@@ -90,27 +90,29 @@
 		},
 		"library": {
 			"description": "library management",
-			"refresh": {
-				"flow": "refreshPackages"
-			},
-			"add": {
-				"flow": "addPackage"
-			},
-			"install": {
-				"flow": "installPlatform"
-			},
-			"search": {
-				"flow": "searchPlatform"
-			},
-			"list": {
-				"flow": "listPlatforms"
+			"sub": {
+				"refresh": {
+					"flow": "refreshPackages"
+				},
+				"add": {
+					"flow": "addPackage"
+				},
+				"install": {
+					"flow": "installPlatform"
+				},
+				"search": {
+					"flow": "searchPlatform"
+				},
+				"list": {
+					"flow": "listPlatforms"
+				}
 			},
 			"arduino": true,
 			"runtimeRequired": true
 		},
 		"platform": {
 			"description": "platform management",
-			"menu": {
+			"sub": {
 				"refresh": {
 					"flow": "refreshPackages"
 				},

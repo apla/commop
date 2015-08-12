@@ -7,6 +7,13 @@ var util = require ("util");
  */
 function ArgvParser (config) {
 
+	/* if you want to implement new parser, you should include code below */
+	this.config = config;
+
+	this.optionConfig = config.options;
+
+	this.commandConfig = config.commands;
+
 }
 
 ArgvParser.l10nMessage = {
@@ -59,27 +66,37 @@ ArgvParser.prototype.l10nDescription = function (str, description) {
 
 /**
  * Checks if the command exists in configuration
- * @param   {Object}  config      Whole configuration object
- * @param   {String}  possibleCmd String from argv pretending to be a command
- * @param   {Number}  idx         Index of that string in argv remains
- * @param   {Array}   cmdList     argv remains after option parsing
+ * @param   {Object}  cmd     Command object to fill
+ * @param   {String}  cmdName String from argv pretending to be a command
+ * @param   {Number}  idx     Index of that string in argv remains
+ * @param   {Array}   cmdList argv remains after option parsing
  * @returns {Boolean} true if processing finished, actual command is stored in {@link cmd cmd property}}
  */
-ArgvParser.prototype.commandExists = function (config, possibleCmd, idx, cmdList) {
+ArgvParser.prototype.commandExists = function (cmd, cmdName, idx, cmdList) {
 	// check if command exists in config
 
-	if (!this.commandConfig[possibleCmd]) {
-		if (this.ignoreUnknownCommands) {
+	var cmdConf;
+	if (cmd.config && cmd.config.sub && cmd.config.sub[cmdName]) {
+		cmdConf = cmd.config.sub[cmdName];
+	} else if (this.commandConfig[cmdName]) {
+		cmdConf = this.commandConfig[cmdName];
+	} else {
+		// TODO: add ignoreUnknownCommands config key to the docs
+		if (this.config.ignoreUnknownCommands) {
+			// TODO: put skipped params somewhere
 			return;
 		}
 
+		// TODO: append error
 		return true;
 	}
 
-	var cmdConf = this.commandConfig[possibleCmd];
+	cmd.config = cmdConf;
+	cmd.branch = cmd.branch || [];
+	cmd.branch.push (cmdName);
 
 	if ("type" in cmdConf) {
-		this.appendError (this.l10nMessage ("commandDefinedAsOption"), possibleCmd, possibleCmd);
+		this.appendError (this.l10nMessage ("commandDefinedAsOption"), cmdName, cmdName);
 		return true;
 	}
 
@@ -87,22 +104,20 @@ ArgvParser.prototype.commandExists = function (config, possibleCmd, idx, cmdList
 	if (!cmdConf.run && !cmdConf.flow && !cmdConf.script) {
 
 		if (!cmdList[idx + 1]) {
-			this.appendError (this.l10nMessage ("commandHandlerMissing"), possibleCmd);
+			this.appendError (this.l10nMessage ("commandHandlerMissing"), cmdName);
 			return true;
 		}
 
 		if (!cmdConf.sub || !cmdConf.sub[cmdList[idx + 1]]) {
-			this.appendError (this.l10nMessage ("commandSubMissing"), possibleCmd, cmdList[idx + 1]);
+			this.appendError (this.l10nMessage ("commandSubMissing"), cmdName, cmdList[idx + 1]);
 			return true;
 		}
 
 		// found possible subcommand
-		return this.commandExists (cmdConf, cmdList[idx + 1], idx + 1, cmdList);
+		return this.commandExists (cmd, cmdList[idx + 1], idx + 1, cmdList);
 	}
 
-	this.cmd = cmdConf;
-
-	return cmdConf;
+	return cmd;
 }
 
 /**
@@ -276,10 +291,12 @@ ArgvParser.prototype.appendError = function () {
  * @param   {Object} options from parser
  * @returns {Object} with two keys: failed and valid options
  */
-ArgvParser.prototype.validateOptions = function (cmdConf, options) {
+ArgvParser.prototype.validateOptions = function (cmd, options) {
 	// validate command options
 	var valid = {};
 	var failed = {};
+
+	var cmdConf = cmd.config;
 
 	var conf = this.optionConfig;
 
@@ -375,24 +392,23 @@ ArgvParser.prototype.findCommand = function (options) {
 	// TODO: avoid those class fields
 	delete this.cmd;
 
-	argvRemains.some (this.commandExists.bind (this, this.config));
+	var cmd = {};
 
-	var haveCmd = this.cmd;
+	argvRemains.some (this.commandExists.bind (this, cmd));
 
-	if (!haveCmd || haveCmd === true) {
+	if (!cmd.config) {
 		var usage = this.usage ();
 		return {usage: usage};
 	}
 
-	var options = this.validateOptions (haveCmd, options);
+	var options = this.validateOptions (cmd, options);
+
+	cmd.options = options.valid;
+	cmd.failedOptions = options.failed;
+	cmd.errors = this.errors;
 
 	//if (!Object.keys(options.failed).length) {
-		return {
-			config: haveCmd,
-			options: options.valid,
-			failedOptions: options.failed,
-			errors: this.errors
-		};
+		return cmd;
 	//}
 }
 
