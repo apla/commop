@@ -23,7 +23,7 @@ ArgvParser.l10nMessage = {
 	commandHandlerMissing: "command '%s' doesn't contain 'run', 'flow' or 'script' key to define code to handle command",
 	commandSubMissing: "command '%s' doesn't contain 'sub' key to define subcommand for %s",
 	globalOptions: "Global options:",
-	commands: "Commands",
+	commands: "Commands:",
 	taskError: "task '%s' error:",
 };
 
