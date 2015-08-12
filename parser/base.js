@@ -215,13 +215,14 @@ ArgvParser.prototype.usage = function () {
 	// TODO: cluster commands using some key from config.help
 	// TODO: check if banner and help exists
 	var usage = [].concat (
-		this.config.help && this.config.help.banner ? this.config.help.banner : "",
+		this.config.usage ? this.config.usage : "",
 		"",
 		this.l10nMessage ("globalOptions"),
 		options.map (optSpaceFill).sort(),
 		"",
 		this.l10nMessage ("commands"),
-		commands.map (cmdSpaceFill).sort()
+		commands.map (cmdSpaceFill).sort(),
+		""
 	).join ("\n")
 
 	return usage;

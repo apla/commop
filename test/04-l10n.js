@@ -27,7 +27,10 @@ var testConfig = {
 			}
 		},
 		hidden: {run: "justTest"}
-	}
+	},
+	usage: [
+		"testbannertest"
+	]
 };
 
 function L10NParser (config) {
@@ -60,13 +63,16 @@ describe (baseName+" parse empty argv", function () {
 
 	it ("for usage", function () {
 		var cmd = optParser.findCommand ([]);
+
 		assert ("usage" in cmd, "have usage");
+		// console.log (cmd.usage);
 		assert (cmd.usage.match (L10NParser.l10nMessage.globalOptions), "have l10n for 'global options' message");
 		assert (cmd.usage.match (L10NParser.l10nMessage.commands), "have l10n for 'commands' message");
 		assert (cmd.usage.match (L10NParser.l10nDescription.verbose), "have l10n for 'verbose' option description");
 		assert (cmd.usage.match (L10NParser.l10nDescription.cmd), "have l10n for 'cmd' command description");
 		assert (!cmd.usage.match ("hidden"), "don't have command without description in usage");
-		// console.log (cmd.usage);
+		assert (cmd.usage.match (testConfig.usage[0]), "with usage prologue");
+
 	});
 });
 

@@ -208,16 +208,17 @@
 		},
 		"help": {
 			"alias": "h",
-			"anyway": true,
-			"banner": [
-				"Cuwire is a command-line toolkit to work with microcontrollers.",
-				"",
-				"It is intended to replace Arduino IDE UI for those who prefer to work in",
-				"terminal or want to integrate Arduino development in a 3rd party IDE.",
-				"",
-				"Cuwire can build sketches, libraries, upload firmwares, establish",
-				"serial communication."
-			]
+			"anyway": true
 		}
-	}
+	},
+	"usage": [
+		"Cuwire is a command-line toolkit to work with microcontrollers.",
+		"",
+		"It is intended to replace Arduino IDE UI for those who prefer to work in",
+		"terminal or want to integrate Arduino development in a 3rd party IDE.",
+		"",
+		"Cuwire can build sketches, libraries, upload firmwares, establish",
+		"serial communication."
+	]
+
 }
