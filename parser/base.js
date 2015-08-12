@@ -138,8 +138,8 @@ ArgvParser.prototype.formatOption = function (option, optConf) {
 	}
 
 	var line = "   " + names.map (function (name, i) {
-		return (name.length === 1 ? "-" : "--") + name;
-	}).join (", ");
+		return this.helpNamePresenter ((name.length === 1 ? "-" : "--") + name);
+	}.bind (this)).join (", ");
 
 	// TODO: add support for alternate values type, like "type": ["yes", "no"]
 	if (optConf.type !== "boolean")
@@ -150,7 +150,13 @@ ArgvParser.prototype.formatOption = function (option, optConf) {
 	return [line, l10nDescription];
 }
 
+ArgvParser.prototype.helpNamePresenter = function (name) {
+	return name
+}
 
+function removeAnsiEscapes (str) {
+	return str.replace (/\033\[\d+m/g, "");
+}
 
 /**
  * Usage generator from options and commands
@@ -188,7 +194,7 @@ ArgvParser.prototype.usage = function () {
 			continue;
 
 		var optHelp = this.formatOption (optName, optConf);
-		maxOptWidth = Math.max (optHelp[0].length, maxOptWidth);
+		maxOptWidth = Math.max (removeAnsiEscapes (optHelp[0]).length, maxOptWidth);
 		options.push (optHelp);
 
 	}
@@ -201,13 +207,20 @@ ArgvParser.prototype.usage = function () {
 			continue;
 
 		if (cmdConf.run || cmdConf.script || cmdConf.flow) {
-			maxCmdWidth = Math.max (cmdName.length + 3, maxCmdWidth);
 			var l10nDescription = this.l10nDescription (cmdName, cmdConf.description);
-			commands.push (["   " + cmdName, l10nDescription]);
+			var cmdHelp = ["   " + this.helpNamePresenter (cmdName), l10nDescription];
+			commands.push (cmdHelp);
+			maxCmdWidth = Math.max (removeAnsiEscapes (cmdHelp[0]).length, maxCmdWidth);
 		}
 	}
 
-	function spaceFill (m, v) {for (var l = m + 3 - v[0].length; l--; v[0] += " "); return v[0] + v[1];}
+	function spaceFill (m, v) {
+		var l = removeAnsiEscapes(v[0]).length; // removed ansi escapes
+		if (l >= m + 3)
+			return v[0] + "   " + v[1];
+		for (var o = m + 3 - l; o--; v[0] += " ");
+		return v[0] + v[1];
+	}
 
 	var optSpaceFill = spaceFill.bind (this, maxOptWidth);
 	var cmdSpaceFill = spaceFill.bind (this, maxCmdWidth);
