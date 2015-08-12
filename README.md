@@ -7,7 +7,7 @@
 -->
 
 
-Solution for complex cli interfaces. <!--[Story](http://apla.me/parcli) behind this module.-->
+Solution for complex cli interfaces.
 
 ## Installation
 
