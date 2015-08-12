@@ -180,6 +180,11 @@ ArgvParser.prototype.usage = function () {
 
 	for (var cmdName in this.commandConfig) {
 		var cmdConf = this.commandConfig[cmdName];
+
+		// XXX: maybe warning?
+		if (!cmdConf.description)
+			continue;
+
 		if (cmdConf.run || cmdConf.script || cmdConf.flow) {
 			maxCmdWidth = Math.max (cmdName.length + 3, maxCmdWidth);
 			var l10nDescription = this.l10nDescription (cmdName, cmdConf.description);

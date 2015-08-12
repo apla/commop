@@ -25,7 +25,8 @@ var testConfig = {
 			sub: {
 				"cmd": {description: "cmd from subtree to run", run: "runCmd"}
 			}
-		}
+		},
+		hidden: {run: "justTest"}
 	}
 };
 
@@ -64,6 +65,7 @@ describe (baseName+" parse empty argv", function () {
 		assert (cmd.usage.match (L10NParser.l10nMessage.commands), "have l10n for 'commands' message");
 		assert (cmd.usage.match (L10NParser.l10nDescription.verbose), "have l10n for 'verbose' option description");
 		assert (cmd.usage.match (L10NParser.l10nDescription.cmd), "have l10n for 'cmd' command description");
+		assert (!cmd.usage.match ("hidden"), "don't have command without description in usage");
 		// console.log (cmd.usage);
 	});
 });
