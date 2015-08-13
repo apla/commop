@@ -59,7 +59,7 @@ describe (baseName+" parse global options (simplified interface)", function () {
 
 });
 
-describe (baseName+" parse command options", function () {
+describe (baseName+" parse command's options", function () {
 	it ("have only defined options", function () {
 		var cmd = optParser.findCommand (["upload", "--port", "/dev/cuXXX"]);
 		assert ("port" in cmd.options, "have a port option");
@@ -69,11 +69,63 @@ describe (baseName+" parse command options", function () {
 	});
 });
 
-describe (baseName+" parse command options with conflicts", function () {
+describe (baseName+" parse command's options with conflicts", function () {
 	it ("have only defined options", function () {
 		var cmd = optParser.findCommand (["console", "--port", "/dev/cuXXX", "--board", "uno"]);
+
+		assert (!("port" in cmd.options), "port unexpectedly defined");
+		assert (!("board" in cmd.options), "board unexpectedly defined");
+
 		assert ("port" in cmd.failedOptions, "port conficts with board");
+		assert (cmd.failedOptions.port === "conflict", "port conflict");
 		assert ("board" in cmd.failedOptions, "board conficts with port");
+		assert (cmd.failedOptions.board === "conflict", "board conflict");
+	});
+});
+
+describe (baseName+" parse command with required option", function () {
+	it ("have error when all required options not present", function () {
+		var cmd = optParser.findCommand (["console"]);
+
+		assert (!("port" in cmd.options), "port missing");
+		assert (!("board" in cmd.options), "board missing");
+
+		assert ("port" in cmd.failedOptions, "port missing");
+		assert (cmd.failedOptions.port === "required", "port missing");
+		assert ("board" in cmd.failedOptions, "board missing");
+		assert (cmd.failedOptions.board === "required", "board missing");
+	});
+
+	it ("have error when required option not present", function () {
+		var cmd = optParser.findCommand (["compile"]);
+
+		assert (!("board" in cmd.options), "board missing");
+
+		assert ("board" in cmd.failedOptions, "board missing");
+		assert (cmd.failedOptions.board === "required", "board missing");
+	});
+
+	it ("have options when option present", function () {
+		var cmd = optParser.findCommand (["compile", "--board", "uno"]);
+
+		assert (!("board" in cmd.failedOptions), "board not failed");
+
+		assert ("board" in cmd.options, "board present");
+	});
+});
+
+
+describe (baseName+" parse mutually exclusive required options", function () {
+	it ("have only defined options", function () {
+		var cmd = optParser.findCommand (["console", "--board", "uno"]);
+		// console.log (cmd, cmd.config.options);
+		assert ("board" in cmd.options, "board option defined");
+		assert (!("port" in cmd.failedOptions), "port option not failed");
+	});
+	it ("have only defined options", function () {
+		var cmd = optParser.findCommand (["console", "--port", "/dev/cuXXX"]);
+		assert ("port" in cmd.options, "port option defined");
+		assert (!("board" in cmd.failedOptions), "board option not failed");
 	});
 });
 

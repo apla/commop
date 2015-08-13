@@ -74,6 +74,63 @@ ArgvParser.prototype.l10nDescription = function (str, description) {
 	}
 }
 
+function parseCmdOpt (optConf) {
+	if (typeof optConf === "string") {
+		var param = optConf;
+		optConf = {};
+		optConf[param] = true;
+	}
+
+	if (optConf === null || typeof optConf !== "object") {
+		optConf = {};
+	}
+
+	return optConf;
+}
+
+ArgvParser.prototype.commandConfigFilter = function (commands) {
+	commands = commands || this.commandConfig;
+	for (var cmdName in commands) {
+		if ("sub" in commands[cmdName]) this.commandConfigFilter (commands[cmdName].sub);
+		var cmdOpts = commands[cmdName].options;
+		if (cmdOpts) {
+			var isCmdOptList = cmdOpts.constructor === Array;
+			Object.keys (cmdOpts).forEach (function (optName) {
+				var optConf = cmdOpts[optName];
+				if (isCmdOptList) {
+					optConf = {};
+					optName = cmdOpts[optName];
+				}
+
+				if (!(optName in this.optionConfig)) {
+					// TODO: l10n
+					throw "can't find option '"+optName+"' for command '"+cmdName+"'";
+				}
+
+				// we cannot do more checks if we have just an option array
+				if (isCmdOptList) return;
+
+				optConf = parseCmdOpt (optConf);
+
+				if ("conflicts" in optConf) {
+					var conflicts = optConf.conflicts.constructor === Array ? optConf.conflicts : [optConf.conflicts];
+					conflicts.forEach (function (conflictOpt) {
+						var conflictOptConf = cmdOpts[conflictOpt] = parseCmdOpt (cmdOpts[conflictOpt]);
+						if (!("conflicts" in conflictOptConf)) {
+							conflictOptConf.conflicts = [optName];
+						} else if (conflictOptConf.conflicts.indexOf (optName) === -1) {
+							conflictOptConf.conflicts.push (optName);
+						}
+					}.bind (this));
+				}
+
+				cmdOpts[optName] = optConf;
+			}.bind (this));
+		}
+	}
+}
+
+
 /**
  * Checks if the command exists in configuration
  * @param   {Object}  cmd     Command object to fill
@@ -106,7 +163,11 @@ ArgvParser.prototype.commandExists = function (cmd, cmdName, idx, cmdList) {
 	cmd.branch.push (cmdName);
 
 	if ("type" in cmdConf) {
-		this.appendError (this.l10nMessage ("commandDefinedAsOption"), cmdName, cmdName);
+		this.appendError (
+			this.l10nMessage ("commandDefinedAsOption"),
+			this.helpNamePresenter (cmdName),
+			this.helpNamePresenter (cmdName)
+		);
 		return true;
 	}
 
@@ -114,12 +175,19 @@ ArgvParser.prototype.commandExists = function (cmd, cmdName, idx, cmdList) {
 	if (!cmdConf.run && !cmdConf.flow && !cmdConf.script) {
 
 		if (!cmdList[idx + 1]) {
-			this.appendError (this.l10nMessage ("commandHandlerMissing"), cmdName);
+			this.appendError (
+				this.l10nMessage ("commandHandlerMissing"),
+				this.helpNamePresenter (cmdName)
+			);
 			return true;
 		}
 
 		if (!cmdConf.sub || !cmdConf.sub[cmdList[idx + 1]]) {
-			this.appendError (this.l10nMessage ("commandSubMissing"), cmdName, cmdList[idx + 1]);
+			this.appendError (
+				this.l10nMessage ("commandSubMissing"),
+				this.helpNamePresenter (cmdName),
+				this.helpNamePresenter (cmdList[idx + 1])
+			);
 			return true;
 		}
 
@@ -326,12 +394,19 @@ ArgvParser.prototype.validateOptions = function (cmd, options) {
 
 	var cmdOptions = cmdConf.options || {};
 
+	var required = {};
+	for (var optName in cmdOptions) {
+		if (cmdOptions[optName] && (cmdOptions[optName] === "required" || cmdOptions[optName].required)) {
+			required[optName] = true;
+		}
+	}
+
 	for (var option in options) {
 		if (option === "_") continue;
 		if (option in failed) continue;
 		var optConf = conf[option];
 		if (!optConf) {
-			this.appendError (this.l10nMessage ("optionConfMissing"), option);
+			this.appendError (this.l10nMessage ("optionConfMissing"), this.helpNamePresenter (option));
 			continue;
 		}
 
@@ -357,28 +432,31 @@ ArgvParser.prototype.validateOptions = function (cmd, options) {
 		}
 
 		conflicts.forEach (function (conflictOpt) {
-			if (options[conflictOpt]) {
-				console.error (this.l10nMessage ("optionConflict"), option, conflictOpt);
-				failed[conflictOpt] = "conflict";
-				failed[option] = "conflict";
-			}
+			required[conflictOpt] = false;
+			if (!options[conflictOpt]) return;
+			this.appendError (
+				this.l10nMessage ("optionConflict"),
+				this.helpNamePresenter (option),
+				this.helpNamePresenter (conflictOpt)
+			);
+			failed[conflictOpt] = "conflict";
+			failed[option] = "conflict";
+			if (conflictOpt in valid) delete valid[conflictOpt];
+
 		}.bind (this));
 
-		if (!failed[option]) {
+		required[option] = false;
+
+		if (!(option in failed)) {
 			valid[option] = options[option];
 		}
 
 		// && cmdConf.options[option]
 	}
 
-	for (var optName in cmdOptions) {
-		var required = cmdOptions[optName] === true;
-		if (cmdOptions[optName] && cmdOptions[optName].required) {
-			required = true;
-		}
-		if (required && !(optName in valid)) {
-			failed[optName] = "required";
-		}
+	for (var optRequired in required) {
+		if (!required[optRequired]) continue;
+		failed[optRequired] = "required";
 	}
 
 	return {failed: failed, valid: valid};
@@ -467,7 +545,11 @@ ArgvParser.prototype.start = function (cmd, origin, cb) {
 	var launchNext = function (err) {
 		// probably need to stop on error?
 		if (err)
-			this.appendError (this.l10nMessage ("taskError"), methodNames[launchIdx], err);
+			this.appendError (
+				this.l10nMessage ("taskError"),
+				this.helpNamePresenter (methodNames[launchIdx]),
+				err
+			);
 		launchIdx ++;
 		var methodName = methodNames[launchIdx];
 		if (methodName) {

@@ -155,9 +155,9 @@
 			"runtimeRequired": true,
 			"options": {
 				"define": true,
-				"inc": true,
-				"board": true,
-				"model": true,
+				"inc":    true,
+				"board": "required",
+				"model":  true,
 				"sketch": true
 			}
 		},
@@ -204,7 +204,11 @@
 				"showPorts",
 				"console"
 			],
-			"options": {"board": {"conflicts": ["port"]}, "baudrate": null, "port": null}
+			"options": {
+				"board": {"conflicts": ["port"], "required": true},
+				"port": {"required": true},
+				"baudrate": null
+			}
 		},
 		"help": {
 			"alias": "h",
