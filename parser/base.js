@@ -153,7 +153,6 @@ ArgvParser.prototype.commandExists = function (cmd, cmdName, idx, cmdList) {
 	} else if (this.commandConfig[cmdName]) {
 		cmdConf = this.commandConfig[cmdName];
 	} else {
-		// TODO: add ignoreUnknownCommands config key to the docs
 		if (this.config.ignoreUnknownCommands) {
 			// TODO: put skipped params somewhere
 			return;
@@ -309,7 +308,6 @@ ArgvParser.prototype.usage = function () {
 	var cmdSpaceFill = spaceFill.bind (this, maxCmdWidth);
 
 	// TODO: cluster commands using some key from config.help
-	// TODO: check if banner and help exists
 	var usage = [].concat (
 		this.config.usage ? this.config.usage : "",
 		"",
@@ -500,9 +498,6 @@ ArgvParser.prototype.findCommand = function (options) {
 
 	var haveCommand;
 	var argvRemains  = options._;
-
-	// TODO: avoid those class fields
-	delete this.cmd;
 
 	var cmd = {};
 

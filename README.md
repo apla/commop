@@ -283,7 +283,7 @@ options: {
  will be filled from environment variable. In override mode environment values
  takes over precedence over argv options.
 
-
+ * `ignoreUnknownCommands` allows to ignore unknown commands
 
 ## License
 
