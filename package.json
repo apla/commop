@@ -1,6 +1,6 @@
 {
 	"name": "parcli",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"description": "cli interface for nodejs apps",
 	"main": "index.js",
 	"scripts": {
@@ -20,5 +20,8 @@
 	"bugs": {
 		"url": "https://github.com/apla/parcli/issues"
 	},
-	"homepage": "https://github.com/apla/parcli"
+	"homepage": "https://github.com/apla/parcli",
+	"devDependencies": {
+		"mocha": "*"
+	}
 }
