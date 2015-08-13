@@ -145,3 +145,44 @@ describe (baseName+" parse nothing", function () {
 		assert ("usage" in cmd, "usage defined in cmd");
 	});
 });
+
+describe (baseName+" parse command with env", function () {
+	it ("have options from argv", function () {
+		var envMode = optParser.config.envMode;
+		optParser.config.envMode = "fallback";
+		process.env.ARDUINO_APP = "xxx";
+		var cmd = optParser.findCommand (["boards", "-A", "yyy"]);
+
+		assert ("options" in cmd, "options exists in cmd");
+		assert (cmd.options.arduino === "yyy", "using option value in fallback mode");
+
+		delete process.env.ARDUINO_APP;
+		optParser.config.envMode = envMode;
+	});
+
+	it ("have options from env", function () {
+		var envMode = optParser.config.envMode;
+		optParser.config.envMode = "fallback";
+		process.env.ARDUINO_APP = "xxx";
+		var cmd = optParser.findCommand (["boards"]);
+
+		assert ("options" in cmd, "options exists in cmd");
+		assert (cmd.options.arduino === "xxx", "using option value in fallback mode");
+
+		delete process.env.ARDUINO_APP;
+		optParser.config.envMode = envMode;
+	});
+
+	it ("have options overriden", function () {
+		var envMode = optParser.config.envMode;
+		optParser.config.envMode = "override";
+		process.env.ARDUINO_APP = "xxx";
+		var cmd = optParser.findCommand (["boards", "-A", "yyy"]);
+
+		assert ("options" in cmd, "options exists in cmd");
+		assert (cmd.options.arduino === "xxx", "using env value in override mode");
+
+		delete process.env.ARDUINO_APP;
+		optParser.config.envMode = envMode;
+	});
+});

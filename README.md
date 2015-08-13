@@ -210,7 +210,8 @@ Configuration is a javascript object. Options and commands configurations under
 		"global": true,
 		"alias": "v",
 		"description": "be verbose",
-		"default": false
+		"default": false,
+		"env": "VERBOSE"
 	},
 	"arduino":  {"type": "string",  "global": true, "alias": "A"},
 	"include":  {"type": "string",  "alias": "I"},
@@ -231,6 +232,8 @@ Configuration keys:
  * `description` needed for usage/help generation
 
  * `default` value
+
+ * `env` keys to use for that option
 
 
 ### Configuration for command
@@ -276,7 +279,11 @@ options: {
 
 ### Additional flags
 
-TODO
+ * `envMode` can be `override` or `fallback`. In fallback mode every missing option
+ will be filled from environment variable. In override mode environment values
+ takes over precedence over argv options.
+
+
 
 ## License
 

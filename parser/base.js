@@ -21,7 +21,8 @@ ArgvParser.l10nMessage = {
 	globalOptions: "Global options:",
 	commands: "Commands:",
 	taskError: "task '%s' error:",
-	configKeysError: "configuration must contain 'options' and 'commands' keys"
+	configKeysError: "configuration must contain 'options' and 'commands' keys",
+	unknownEnvMode: "unknown environment mode %s"
 };
 
 ArgvParser.prototype.init = function (config) {
@@ -346,21 +347,26 @@ ArgvParser.prototype.cleanupAliases = function (options) {
  * @param {Object} options from parser
  */
 ArgvParser.prototype.fillOptionsFromEnv = function (options) {
+
+	var envMode = this.config.envMode || "fallback";
+
 	for (var k in this.optionConfig) {
 		if (!this.optionConfig[k].env)
-			continue;
-
-		// TODO: make override options from env configurable
-		if (options[k])
 			continue;
 
 		var envVars = this.optionConfig[k].env;
 		if (envVars.constructor !== Array)
 			envVars = [envVars];
 		envVars.forEach (function (envVar) {
-			if (process.env[envVar])
+			if (!(envVar in process.env)) return;
+			if (envMode === "override") {
 				options[k] = process.env[envVar];
-		});
+			} else if (envMode === "fallback") {
+				options[k] = k in options ? options[k] : process.env[envVar];
+			} else {
+				this.appendError (this.l10nMessage ("unknownEnvMode"), envMode);
+			}
+		}.bind (this));
 	}
 }
 

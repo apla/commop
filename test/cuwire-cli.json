@@ -7,7 +7,8 @@
 			"type": "boolean",
 			"description": "verbose output",
 			"default": false,
-			"global": true
+			"global": true,
+			"env": "VERBOSE"
 		},
 		"debug": {
 			"alias": "d",
