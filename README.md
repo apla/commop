@@ -1,11 +1,7 @@
 # parcli
 
-
-<!--
-[! [Build Status](https://api.travis-ci.org/apla/parcli.js.svg)](http://travis-ci.org/apla/parcli.js)
-[! [NPM Version](http://img.shields.io/npm/v/parcli.svg?style=flat)](https://www.npmjs.org/package/parcli)
--->
-
+[![Build Status](https://travis-ci.org/apla/parcli.svg?branch=master)](https://travis-ci.org/apla/parcli)
+[![NPM Version](http://img.shields.io/npm/v/parcli.svg?style=flat)](https://www.npmjs.org/package/parcli)
 
 Solution for complex cli interfaces.
 
