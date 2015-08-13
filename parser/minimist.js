@@ -6,11 +6,8 @@ var ArgvParser = require ("./base");
 
 function MiniParser (config) {
 
-	this.config = config;
-
-	this.optionConfig = config.options;
-
-	this.commandConfig = config.commands;
+	/* if you want to implement new parser, you should call init */
+	this.init (config);
 
 	var argvOptions = this.getOptions ();
 

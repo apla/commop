@@ -7,12 +7,8 @@ var util = require ("util");
  */
 function ArgvParser (config) {
 
-	/* if you want to implement new parser, you should include code below */
-	this.config = config;
-
-	this.optionConfig = config.options;
-
-	this.commandConfig = config.commands;
+	/* if you want to implement new parser, you should call init */
+	this.init (config);
 
 }
 
@@ -25,7 +21,21 @@ ArgvParser.l10nMessage = {
 	globalOptions: "Global options:",
 	commands: "Commands:",
 	taskError: "task '%s' error:",
+	configKeysError: "configuration must contain 'options' and 'commands' keys"
 };
+
+ArgvParser.prototype.init = function (config) {
+	if (!config || !config.options || !config.commands) {
+		throw this.l10nMessage ("configKeysError");
+	}
+
+	this.config = config;
+
+	this.optionConfig = config.options;
+
+	this.commandConfig = config.commands;
+	this.commandConfigFilter ();
+}
 
 /**
  * Gather all option configurations from config
