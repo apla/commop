@@ -20,6 +20,9 @@ ArgvParser.l10nMessage = {
 	commandSubMissing: "command '%s' doesn't contain 'sub' key to define subcommand for %s",
 	globalOptions: "Global options:",
 	commands: "Commands:",
+	commandIntro: "Command ",
+	options: "Options:",
+	subCommands: "Subcommands:",
 	taskError: "task '%s' error:",
 	configKeysError: "configuration must contain 'options' and 'commands' keys",
 	unknownEnvMode: "unknown environment mode %s",
@@ -97,13 +100,13 @@ ArgvParser.prototype.commandConfigFilter = function (commands) {
 		if ("sub" in commands[cmdName]) this.commandConfigFilter (commands[cmdName].sub);
 		var cmdOpts = commands[cmdName].options;
 		if (cmdOpts) {
-			var isCmdOptList = cmdOpts.constructor === Array;
+			if (cmdOpts.constructor === Array) {
+				var cmdOptsArray = cmdOpts;
+				cmdOpts = commands[cmdName].options = {};
+				cmdOptsArray.forEach (function (optName) {cmdOpts[optName] = {}});
+			}
 			Object.keys (cmdOpts).forEach (function (optName) {
 				var optConf = cmdOpts[optName];
-				if (isCmdOptList) {
-					optConf = {};
-					optName = cmdOpts[optName];
-				}
 
 				if (!(optName in this.optionConfig)) {
 					throw util.format (
@@ -112,9 +115,6 @@ ArgvParser.prototype.commandConfigFilter = function (commands) {
 						this.helpNamePresenter (cmdName)
 					);
 				}
-
-				// we cannot do more checks if we have just an option array
-				if (isCmdOptList) return;
 
 				optConf = parseCmdOpt (optConf);
 
@@ -241,6 +241,31 @@ function removeAnsiEscapes (str) {
 	return str.replace (/\033\[\d+m/g, "");
 }
 
+function spaceFill (m, v) {
+	var l = v[2];
+	if (l >= m + 3)
+		return v[0] + "   " + v[1];
+	for (var o = m + 3 - l; o--; v[0] += " ");
+	return v[0] + v[1];
+}
+
+ArgvParser.prototype.helpFormatOption = function (optName, optConf) {
+
+	// XXX: maybe warning?
+	if (!optConf.description)
+		return;
+
+	// non global option
+	if (!optConf.type) {
+		// TODO: show error
+		return;
+	}
+
+	var optHelp = this.formatOption (optName, optConf);
+	optHelp.push (removeAnsiEscapes (optHelp[0]).length);
+	return optHelp;
+}
+
 /**
  * Usage generator from options and commands
  * @returns {String} contains banner, global options and command list
@@ -263,23 +288,15 @@ ArgvParser.prototype.usage = function () {
 	var options  = [];
 	for (var optName in this.optionConfig) {
 		var optConf = this.optionConfig[optName];
-		// XXX: maybe warning?
-		if (!optConf.description)
-			continue;
 
-		// non global option
-		if (!optConf.type) {
-			// TODO: show error
-			continue;
+		if (!optConf.global) continue;
+
+		var optHelp = this.helpFormatOption (optName, optConf);
+
+		if (optHelp) {
+			options.push (optHelp);
+			maxOptWidth = Math.max (optHelp[2], maxOptWidth);
 		}
-
-		if (!optConf.global)
-			continue;
-
-		var optHelp = this.formatOption (optName, optConf);
-		maxOptWidth = Math.max (removeAnsiEscapes (optHelp[0]).length, maxOptWidth);
-		options.push (optHelp);
-
 	}
 
 	for (var cmdName in this.commandConfig) {
@@ -292,17 +309,10 @@ ArgvParser.prototype.usage = function () {
 		if (cmdConf.run || cmdConf.script || cmdConf.flow) {
 			var l10nDescription = this.l10nDescription (cmdName, cmdConf.description);
 			var cmdHelp = ["   " + this.helpNamePresenter (cmdName), l10nDescription];
+			cmdHelp.push (removeAnsiEscapes (cmdHelp[0]).length);
 			commands.push (cmdHelp);
 			maxCmdWidth = Math.max (removeAnsiEscapes (cmdHelp[0]).length, maxCmdWidth);
 		}
-	}
-
-	function spaceFill (m, v) {
-		var l = removeAnsiEscapes(v[0]).length; // removed ansi escapes
-		if (l >= m + 3)
-			return v[0] + "   " + v[1];
-		for (var o = m + 3 - l; o--; v[0] += " ");
-		return v[0] + v[1];
 	}
 
 	var optSpaceFill = spaceFill.bind (this, maxOptWidth);
@@ -321,6 +331,98 @@ ArgvParser.prototype.usage = function () {
 	).join ("\n")
 
 	return usage;
+}
+
+
+ArgvParser.prototype.helpForCommand = function (cmd) {
+
+	if (cmd.constructor === Array) {
+		cmd = this.findCommand (cmd);
+	}
+
+	var maxCmdWidth =  0;
+	var maxOptWidth =  0;
+	var maxColWidth = 30;
+
+	var commands      = [];
+	var globalOptions = [];
+	var options       = [];
+
+	for (var optName in this.optionConfig) {
+		var optConf = this.optionConfig[optName];
+
+		if (!optConf.global) continue;
+
+		var optHelp = this.helpFormatOption (optName, optConf);
+
+		if (optHelp) {
+			globalOptions.push (optHelp);
+			maxOptWidth = Math.max (optHelp[2], maxOptWidth);
+		}
+	}
+
+	if (cmd.config.options) for (var optName in cmd.config.options) {
+		var optConf = this.optionConfig[optName];
+
+		var optHelp = this.helpFormatOption (optName, optConf);
+
+		if (optHelp) {
+			options.push (optHelp);
+			maxOptWidth = Math.max (optHelp[2], maxOptWidth);
+		}
+	}
+
+	if (cmd.config.sub) for (var cmdName in cmd.config.sub) {
+		var cmdConf = cmd.config.sub[cmdName];
+
+		// XXX: maybe warning?
+		if (!cmdConf.description)
+			continue;
+
+		if (cmdConf.run || cmdConf.script || cmdConf.flow) {
+			var l10nKey = (cmd.branch || []).concat (cmdName).join ('.');
+			var l10nDescription = this.l10nDescription (l10nKey, cmdConf.description);
+			var cmdHelp = ["   " + this.helpNamePresenter (cmdName), l10nDescription];
+			cmdHelp.push (removeAnsiEscapes (cmdHelp[0]).length);
+			commands.push (cmdHelp);
+			maxCmdWidth = Math.max (removeAnsiEscapes (cmdName).length, maxCmdWidth);
+		}
+	}
+
+	var optSpaceFill = spaceFill.bind (this, maxOptWidth);
+	var cmdSpaceFill = spaceFill.bind (this, maxCmdWidth);
+
+	// TODO: cluster commands using some key from config.help
+	var usage = [
+		this.l10nMessage ("commandIntro") + " " +
+		cmd.branch.map (this.helpNamePresenter.bind (this)).join (" "),
+		""
+	];
+	if (cmd.config.usage) {
+		usage.push (cmd.config.usage, "");
+	}
+	if (globalOptions.length) {
+		usage = usage.concat (
+			this.l10nMessage ("globalOptions"),
+			globalOptions.map (optSpaceFill).sort(),
+			""
+		);
+	}
+	if (options.length) {
+		usage = usage.concat (
+			this.l10nMessage ("options"),
+			options.map (optSpaceFill).sort(),
+			""
+		);
+	}
+	if (commands.length) {
+		usage = usage.concat (
+			this.l10nMessage ("subCommands"),
+			commands.map (cmdSpaceFill).sort()
+		);
+	}
+
+	return usage.join ("\n");
 }
 
 

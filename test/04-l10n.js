@@ -19,7 +19,11 @@ var testConfig = {
 		opt3: {type: "boolean", description: "opt3"},
 	},
 	commands: {
-		cmd: {description: "cmd to run", run: "runCmd", options: {opt1: {"conflicts": "opt2"}, opt2: null, opt3: {"required": true}}},
+		cmd: {description: "cmd to run", run: "runCmd", options: {
+			opt1: {"conflicts": "opt2"},
+			opt2: null,
+			opt3: {"required": true}
+		}},
 		cmdtree: {
 			description: "cmd with subcommands",
 			sub: {
@@ -73,16 +77,46 @@ describe (baseName+" parse empty argv", function () {
 		assert (!cmd.usage.match ("hidden"), "don't have command without description in usage");
 		assert (cmd.usage.match (testConfig.usage[0]), "with usage prologue");
 
+		assert (!cmd.usage.match (testConfig.options.opt1.description), "don't have description for option opt1");
+		assert (!cmd.usage.match (testConfig.options.opt2.description), "don't have description for option opt2");
+		assert (!cmd.usage.match (testConfig.options.opt3.description), "don't have description for option opt3");
 	});
 });
 
 // TODO: add test for help <something>
 
-describe (baseName+" parse argv", function () {
+describe (baseName+" parse help command", function () {
 
-	it.skip ("with config errors", function () {
-		var cmd = optParser.findCommand (optParser.parse (["cmd", "--opt1", "--opt2"]));
-		assert ("verbose" in cmd.options, "have verbose global option");
+	it ("with config errors", function () {
+		var help = optParser.helpForCommand (["cmd"]);
+
+		// console.log (help);
+
+		assert (help.match (L10NParser.l10nMessage.globalOptions), "have l10n for 'global options' message");
+		assert (!help.match (L10NParser.l10nMessage.commands), "don't have l10n for 'commands' message");
+		assert (help.match (L10NParser.l10nMessage.command), "have l10n for 'command' message");
+		assert (help.match (L10NParser.l10nDescription.verbose), "have l10n for 'verbose' option description");
+
+		assert (help.match (testConfig.options.opt1.description), "have description for option opt1");
+		assert (help.match (testConfig.options.opt2.description), "have description for option opt2");
+		assert (help.match (testConfig.options.opt3.description), "have description for option opt3");
+	});
+
+	it ("with config errors", function () {
+		var help = optParser.helpForCommand (["cmdtree"]);
+
+		// console.log (help);
+
+		assert (help.match (L10NParser.l10nMessage.globalOptions), "have l10n for 'global options' message");
+		assert (!help.match (L10NParser.l10nMessage.commands), "don't have l10n for 'commands' message");
+		assert (help.match (L10NParser.l10nDescription.verbose), "have l10n for 'verbose' option description");
+
+		assert (help.match (L10NParser.l10nDescription["cmdtree.cmd"]), "have l10n for 'cmdtree.cmd' command description");
+
+		assert (help.match (optParser.l10nMessage ("subCommands")), "have l10n for 'subCommands' message");
+
+		// assert (help.match (testConfig.usage[0]), "with usage prologue");
+
 		// console.log (cmd);
 
 	});
