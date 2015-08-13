@@ -22,7 +22,8 @@ ArgvParser.l10nMessage = {
 	commands: "Commands:",
 	taskError: "task '%s' error:",
 	configKeysError: "configuration must contain 'options' and 'commands' keys",
-	unknownEnvMode: "unknown environment mode %s"
+	unknownEnvMode: "unknown environment mode %s",
+	optionFoundInCommandButConfig: "can't find option '%s' for command '%s'"
 };
 
 ArgvParser.prototype.init = function (config) {
@@ -104,8 +105,11 @@ ArgvParser.prototype.commandConfigFilter = function (commands) {
 				}
 
 				if (!(optName in this.optionConfig)) {
-					// TODO: l10n
-					throw "can't find option '"+optName+"' for command '"+cmdName+"'";
+					throw util.format (
+						this.l10nMessage ("optionFoundInCommandButConfig"),
+						this.helpNamePresenter (optName),
+						this.helpNamePresenter (cmdName)
+					);
 				}
 
 				// we cannot do more checks if we have just an option array
