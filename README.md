@@ -277,6 +277,12 @@ options: {
 
 ```
 
+##### Note
+
+Implied/conflicting options works quite badly with booleans.
+Using boolean options you will allways get value, either
+true or false even if that option is not present.
+
 ### Additional flags
 
  * `envMode` can be `override` or `fallback`. In fallback mode every missing option

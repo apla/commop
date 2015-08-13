@@ -186,3 +186,44 @@ describe (baseName+" parse command with env", function () {
 		optParser.config.envMode = envMode;
 	});
 });
+
+var testConfig2 = {
+	options: {
+		verbose: {global: true, type: "boolean", description: "be verbose"},
+		opt1: {type: "string",  description: "opt1"}, // XXX: it is fine to have some options non-localized?
+		opt2: {type: "number", description: "opt2"},
+		opt3: {type: "string",  description: "opt3"},
+	},
+	commands: {
+		cmd: {description: "cmd to run", run: "runCmd", options: {
+			opt1: {"conflicts": "opt3"},
+			opt2: {"implies": "opt1"},
+			opt3: {"required": true}
+		}}
+	}
+};
+
+var optParser2 = new OptionParser (testConfig2);
+
+// TODO: write same tests for booleans
+
+describe (baseName+" parse command with implied option", function () {
+	it ("have error without implied", function () {
+		var cmd = optParser2.findCommand (["cmd", "--opt2"]);
+
+		assert ("opt1" in cmd.failedOptions, "opt1 missing");
+		assert (!("opt2" in cmd.options), "opt2 without opt1");
+	});
+	it ("have ok implied", function () {
+		var cmd = optParser2.findCommand (["cmd", "--opt1", "xxx",  "--opt2", "1"]);
+
+		assert ("opt2" in cmd.options, "opt2 fullfilled");
+		assert ("opt1" in cmd.options, "opt1 exists");
+	});
+	it ("have implied option not set", function () {
+		var cmd = optParser2.findCommand (["cmd", "--opt3"]);
+
+		assert ("opt3" in cmd.options, "opt3");
+		assert (!("opt2" in cmd.options), "opt2");
+	});
+});

@@ -23,7 +23,8 @@ ArgvParser.l10nMessage = {
 	taskError: "task '%s' error:",
 	configKeysError: "configuration must contain 'options' and 'commands' keys",
 	unknownEnvMode: "unknown environment mode %s",
-	optionFoundInCommandButConfig: "can't find option '%s' for command '%s'"
+	optionFoundInCommandButConfig: "can't find option '%s' for command '%s'",
+	optionImplied: "option '%s' implies option '%s' to be defined"
 };
 
 ArgvParser.prototype.init = function (config) {
@@ -419,6 +420,7 @@ ArgvParser.prototype.validateOptions = function (cmd, options) {
 		}
 
 		var conflicts = optConf.conflicts || [];
+		var implies   = optConf.implies   || [];
 
 		if (optConf.global) {
 			// console.log ('option %s is global', option);
@@ -428,9 +430,14 @@ ArgvParser.prototype.validateOptions = function (cmd, options) {
 		} else if (option in cmdOptions) {
 			// console.log ('option %s is an object', option);
 			// local override for conflicts
-			if (cmdOptions[option] && cmdOptions[option].conflicts) {
-				conflicts = cmdOptions[option].conflicts;
+			if (cmdOptions[option]) {
+				if (cmdOptions[option].conflicts)
+					conflicts = cmdOptions[option].conflicts;
+				if (cmdOptions[option].implies) {
+					implies   = cmdOptions[option].implies;
+				}
 			}
+
 		} else {
 			continue;
 		}
@@ -441,7 +448,9 @@ ArgvParser.prototype.validateOptions = function (cmd, options) {
 
 		conflicts.forEach (function (conflictOpt) {
 			required[conflictOpt] = false;
-			if (!options[conflictOpt]) return;
+			if (!(conflictOpt in options)) return;
+			var conflictOptConf = conf[conflictOpt];
+			if (!conflictOptConf.default && conflictOptConf.type === "boolean" && !options[conflictOpt]) return;
 			this.appendError (
 				this.l10nMessage ("optionConflict"),
 				this.helpNamePresenter (option),
@@ -451,6 +460,24 @@ ArgvParser.prototype.validateOptions = function (cmd, options) {
 			failed[option] = "conflict";
 			if (conflictOpt in valid) delete valid[conflictOpt];
 
+		}.bind (this));
+
+		/* implies */
+
+		if (implies && implies.constructor !== Array) {
+			implies = [implies];
+		}
+
+		implies.forEach (function (impliedOpt) {
+			if (impliedOpt in options) return;
+
+			failed[option] = "scarce";
+			failed[impliedOpt] = "implied";
+			this.appendError (
+				this.l10nMessage ("optionImplied"),
+				this.helpNamePresenter (option),
+				this.helpNamePresenter (impliedOpt)
+			);
 		}.bind (this));
 
 		required[option] = false;
@@ -512,6 +539,7 @@ ArgvParser.prototype.findCommand = function (options) {
 
 	cmd.options = options.valid;
 	cmd.failedOptions = options.failed;
+	// TODO: clear errors
 	cmd.errors = this.errors;
 
 	//if (!Object.keys(options.failed).length) {
