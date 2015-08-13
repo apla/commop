@@ -1,6 +1,6 @@
 var util = require ("util");
 
-var minimist = require ("minimist");
+var minimist = require ("../lib/minimist");
 
 var ArgvParser = require ("./base");
 
