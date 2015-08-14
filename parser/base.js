@@ -311,8 +311,15 @@ ArgvParser.prototype.usage = function () {
 		if (!cmdConf.description)
 			continue;
 
-		if (cmdConf.run || cmdConf.script || cmdConf.flow) {
+		if (cmdConf.run || cmdConf.script || cmdConf.flow || cmdConf.sub) {
 			var l10nDescription = this.l10nDescription (cmdName, cmdConf.description);
+			if (cmdConf.sub) {
+				l10nDescription += Object.keys (cmdConf.sub).length
+					? ": " + Object.keys (cmdConf.sub).map (function (subCmd) {
+					return this.helpNamePresenter (subCmd);
+				}.bind(this)).join (", ")
+				: "";
+			}
 			var cmdHelp = ["   " + this.helpNamePresenter (cmdName), l10nDescription];
 			cmdHelp.push (removeAnsiEscapes (cmdHelp[0]).length);
 			commands.push (cmdHelp);
