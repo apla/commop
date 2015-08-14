@@ -1,6 +1,6 @@
 {
 	"name": "parcli",
-	"version": "1.0.2",
+	"version": "1.1.0",
 	"description": "cli interface for nodejs apps",
 	"main": "index.js",
 	"scripts": {

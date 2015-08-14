@@ -171,7 +171,7 @@ Examples at `test/02-options.js`
 ### Usage generator
 
 If your commands and options have properly defined descriptions,
-`parcli` will generate usage automatically. By default, if there is no command specifie,
+`parcli` will generate usage automatically. By default, if there is no command specified,
 usage will be displayed automatically. But you can override this behaviour.
 
 ```javascript
@@ -194,7 +194,24 @@ var usageString = launcher.usage();
 
 ### Help generator for command
 
-WIP
+Command help displayed automatically if you added a `help` keyword before actual command.
+Also, you can provide your own help handler by setting `run` key for a `help` command in config.
+
+```javascript
+
+// command help will be displayed automatically if you prefixed command with help keyword
+launcher.start (["help", "cmd"], null, function (cmd, data) {
+	if ("usage" in cmd) {
+		// you can return false to skip usage output
+		return false;
+	}
+});
+
+// or, you can generate command help programmatically
+
+var helpString = launcher.helpForCommand (["cmd"]);
+
+```
 
 ## Configuration
 

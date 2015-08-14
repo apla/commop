@@ -237,6 +237,11 @@ ArgvParser.prototype.helpNamePresenter = function (name) {
 	return name
 }
 
+ArgvParser.prototype.errorPresenter = function (error) {
+	return error
+}
+
+
 function removeAnsiEscapes (str) {
 	return str.replace (/\033\[\d+m/g, "");
 }
@@ -395,7 +400,7 @@ ArgvParser.prototype.helpForCommand = function (cmd) {
 	// TODO: cluster commands using some key from config.help
 	var usage = [
 		this.l10nMessage ("commandIntro") + " " +
-		cmd.branch.map (this.helpNamePresenter.bind (this)).join (" "),
+		cmd.branch.map (function (pathChunk) {return this.helpNamePresenter (pathChunk)}.bind (this)).join (" "),
 		""
 	];
 	if (cmd.config.usage) {
@@ -626,7 +631,23 @@ ArgvParser.prototype.findCommand = function (options) {
 	}
 
 	var haveCommand;
-	var argvRemains  = options._;
+	var argvRemains  = options._ || [];
+
+	/////////////////////
+	var showHelp = false;
+	var confHelpHandler = this.commandConfig.help ? this.commandConfig.help.run : undefined;
+
+	if (argvRemains[0] === "help" && !confHelpHandler) {
+		argvRemains.shift();
+		showHelp = true;
+	}
+
+	if (showHelp) {
+		return {
+			usage: this.helpForCommand (argvRemains)
+		};
+	}
+	/////////////////////
 
 	var cmd = {};
 
@@ -663,6 +684,16 @@ ArgvParser.prototype.start = function (cmd, origin, cb) {
 		if (showUsage || showUsage === undefined)
 			console.log (cmd.usage);
 		return;
+	}
+
+	if (cmd.errors) {
+		var showErrors = cb (cmd);
+		if (showErrors || showErrors === undefined) {
+			cmd.errors.forEach (function (err) {
+				console.error (this.errorPresenter (pathChunk));
+			}.bind (this));
+			return;
+		}
 	}
 
 	var cmdConf = cmd.config;

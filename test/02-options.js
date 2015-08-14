@@ -193,13 +193,22 @@ var testConfig2 = {
 		opt1: {type: "string",  description: "opt1"}, // XXX: it is fine to have some options non-localized?
 		opt2: {type: "number", description: "opt2"},
 		opt3: {type: "string",  description: "opt3"},
+		bool1: {type: "boolean", description: "bool1"}, // XXX: it is fine to have some options non-localized?
+		bool2: {type: "boolean", description: "bool2"},
+		bool3: {type: "boolean", description: "bool3"},
 	},
 	commands: {
 		cmd: {description: "cmd to run", run: "runCmd", options: {
 			opt1: {"conflicts": "opt3"},
 			opt2: {"implies": "opt1"},
 			opt3: {"required": true}
+		}},
+		cmd2: {description: "cmd to run", run: "runCmd", options: {
+			bool1: {"conflicts": "opt3"},
+			bool2: {"implies": "opt1"},
+			bool3: {"required": true}
 		}}
+
 	}
 };
 
@@ -225,5 +234,27 @@ describe (baseName+" parse command with implied option", function () {
 
 		assert ("opt3" in cmd.options, "opt3");
 		assert (!("opt2" in cmd.options), "opt2");
+	});
+});
+
+
+describe.skip (baseName+" parse command with implied boolean option", function () {
+	it ("have error without implied", function () {
+		var cmd = optParser2.findCommand (["cmd", "--bool2"]);
+
+		assert ("bool1" in cmd.failedOptions, "bool1 missing");
+		assert (!("bool2" in cmd.options), "bool2 without bool1");
+	});
+	it ("have ok implied", function () {
+		var cmd = optParser2.findCommand (["cmd", "--bool1", "--bool2"]);
+		console.log (cmd);
+		assert ("bool2" in cmd.options, "bool2 fullfilled");
+		assert ("bool1" in cmd.options, "bool1 exists");
+	});
+	it ("have implied option not set", function () {
+		var cmd = optParser2.findCommand (["cmd", "--bool3"]);
+
+		assert ("bool3" in cmd.options, "bool3");
+		assert (!("bool2" in cmd.options), "bool2");
 	});
 });
