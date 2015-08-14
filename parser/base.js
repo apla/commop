@@ -1,4 +1,5 @@
 var util = require ("util");
+var path = require ("path");
 
 /**
  * Generic parser class for argv
@@ -20,7 +21,7 @@ ArgvParser.l10nMessage = {
 	commandSubMissing: "command '%s' doesn't contain 'sub' key to define subcommand for %s",
 	globalOptions: "Global options:",
 	commands: "Commands:",
-	commandIntro: "Command ",
+	commandIntro: path.basename (process.argv[1]),
 	options: "Options:",
 	subCommands: "Subcommands:",
 	taskError: "task '%s' error:",
@@ -331,18 +332,24 @@ ArgvParser.prototype.usage = function () {
 	var cmdSpaceFill = spaceFill.bind (this, maxCmdWidth);
 
 	// TODO: cluster commands using some key from config.help
-	var usage = [].concat (
-		this.config.usage ? this.config.usage : "",
-		"",
+	var usage = [
+		this.l10nMessage ("commandIntro"),
+		""
+	];
+	if (this.config.usage) usage = usage.concat (this.config.usage, "");
+	if (options.length) usage = usage.concat (
 		this.l10nMessage ("globalOptions"),
 		options.map (optSpaceFill).sort(),
-		"",
+		""
+	);
+
+	if (commands.length) usage = usage.concat (
 		this.l10nMessage ("commands"),
 		commands.map (cmdSpaceFill).sort(),
 		""
-	).join ("\n")
+	);
 
-	return usage;
+	return usage.join ("\n");
 }
 
 
@@ -430,7 +437,8 @@ ArgvParser.prototype.helpForCommand = function (cmd) {
 	if (commands.length) {
 		usage = usage.concat (
 			this.l10nMessage ("subCommands"),
-			commands.map (cmdSpaceFill).sort()
+			commands.map (cmdSpaceFill).sort(),
+			""
 		);
 	}
 
