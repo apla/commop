@@ -2,7 +2,7 @@ var path   = require ('path');
 var fs     = require ('fs');
 var assert = require ('assert');
 
-var parserModule = process.env.PARCLI ? "../parser/" + process.env.PARCLI : "../";
+var parserModule = process.env.COMMOP_PARSER ? "../parser/" + process.env.COMMOP_PARSER : "../";
 
 var OptionParser = require (parserModule);
 

@@ -1,13 +1,13 @@
-# parcli
+# CommOp
 
-[![Build Status](https://travis-ci.org/apla/parcli.svg?branch=master)](https://travis-ci.org/apla/parcli)
-[![NPM Version](http://img.shields.io/npm/v/parcli.svg?style=flat)](https://www.npmjs.org/package/parcli)
+[![Build Status](https://travis-ci.org/apla/commop.svg?branch=master)](https://travis-ci.org/apla/commop)
+[![NPM Version](http://img.shields.io/npm/v/commop.svg?style=flat)](https://www.npmjs.org/package/commop)
 
 Solution for complex cli interfaces.
 
 ## Installation
 
-$ npm install -g parcli
+$ npm install -g commop
 
 ### Writing another module
 
@@ -48,10 +48,10 @@ build a cli I want.
 
 ```javascript
 
-var parcli = require ('parcli');
-var config = require ('./parcli.json');
+var commop = require ('commop');
+var config = require ('./commop.json');
 
-var launcher = new parcli (config);
+var launcher = new commop (config);
 
 function compile (cmd, next) {
 	if (cmd.options.inc) {
@@ -80,7 +80,7 @@ I've tried a lot of option parsing modules, and found out that it is matter of p
 For my own tasks (almost) any option parser can handle job. But some needs [advanced validation](https://github.com/trentm/node-dashdash#option-specs),
 in some cases [no requirements](https://github.com/substack/minimist) is a must, and some [loves pirates](https://github.com/bcoe/yargs).
 
-`parcli` uses bundled `minimist` module and supports `yargs` and `dashdash` interfaces.
+`commop` uses bundled `minimist` module and supports `yargs` and `dashdash` interfaces.
 
 ## Interface
 
@@ -89,10 +89,10 @@ launches tasks tied to that configuration.
 
 ```javascript
 
-var parcli = require ('parcli');
-var config = require ('./parcli.json');
+var commop = require ('commop');
+var config = require ('./commop.json');
 
-var launcher = new parcli (cmdConfig);
+var launcher = new commop (cmdConfig);
 
 // getting command configuration from argv
 var cmd;
@@ -171,7 +171,7 @@ Examples at `test/02-options.js`
 ### Usage generator
 
 If your commands and options have properly defined descriptions,
-`parcli` will generate usage automatically. By default, if there is no command specified,
+`commop` will generate usage automatically. By default, if there is no command specified,
 usage will be displayed automatically. But you can override this behaviour.
 
 ```javascript
@@ -307,6 +307,12 @@ true or false even if that option is not present.
  takes over precedence over argv options.
 
  * `ignoreUnknownCommands` allows to ignore unknown commands
+
+### See also
+
+https://github.com/freeformsystems/cli-command complex, many deps, don't have option relationship, events, +sections, +pod
+
+
 
 ## License
 

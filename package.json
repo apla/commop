@@ -1,6 +1,6 @@
 {
-	"name": "parcli",
-	"version": "1.1.0",
+	"name": "commop",
+	"version": "1.2.0",
 	"description": "cli interface for nodejs apps",
 	"main": "index.js",
 	"scripts": {
@@ -8,7 +8,7 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/apla/parcli"
+		"url": "https://github.com/apla/commop"
 	},
 	"keywords": [
 		"cli",
@@ -18,9 +18,9 @@
 	"author": "Ivan Baktsheev",
 	"license": "MIT",
 	"bugs": {
-		"url": "https://github.com/apla/parcli/issues"
+		"url": "https://github.com/apla/commop/issues"
 	},
-	"homepage": "https://github.com/apla/parcli",
+	"homepage": "https://github.com/apla/commop",
 	"devDependencies": {
 		"mocha": "*"
 	}
