@@ -138,7 +138,12 @@
 			"run": [
 				"arduino",
 				"showBoards"
-			]
+			],
+			"sub": {
+				"add": {
+					"run": "platformAdd"
+				}
+			}
 		},
 		"ports": {
 			"description": "show com ports",

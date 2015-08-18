@@ -98,6 +98,16 @@ function parseCmdOpt (optConf) {
 ArgvParser.prototype.commandConfigFilter = function (commands) {
 	commands = commands || this.commandConfig;
 	for (var cmdName in commands) {
+
+		if ("type" in commands[cmdName]) {
+			this.appendError (
+				this.l10nMessage ("commandDefinedAsOption"),
+				this.helpNamePresenter (cmdName),
+				this.helpNamePresenter (cmdName)
+			);
+			return;
+		}
+
 		if ("sub" in commands[cmdName]) this.commandConfigFilter (commands[cmdName].sub);
 		var cmdOpts = commands[cmdName].options;
 		if (cmdOpts) {
@@ -140,68 +150,65 @@ ArgvParser.prototype.commandConfigFilter = function (commands) {
 
 /**
  * Checks if the command exists in configuration
- * @param   {Object}  cmd     Command object to fill
- * @param   {String}  cmdName String from argv pretending to be a command
- * @param   {Number}  idx     Index of that string in argv remains
- * @param   {Array}   cmdList argv remains after option parsing
- * @returns {Boolean} true if processing finished, actual command is stored in {@link cmd cmd property}}
+ * @param   {Object}  commands   Commands object to fill
+ * @param   {Object}  positional Positional options
+ * @param   {String}  cmdName    String from argv pretending to be a command
+ * @param   {Number}  idx        Index of that string in argv remains
+ * @param   {Array}   cmdList    argv remains after option parsing
+ * @returns {Boolean} true if  processing finished, actual command is stored in {@link cmd cmd property}}
  */
-ArgvParser.prototype.commandExists = function (cmd, cmdName, idx, cmdList) {
+ArgvParser.prototype.commandExists = function (commands, positional, cmdName, idx, cmdList) {
 	// check if command exists in config
 
+	var prevCmd = commands[commands.length - 1] || {};
+
 	var cmdConf;
-	if (cmd.config && cmd.config.sub && cmd.config.sub[cmdName]) {
-		cmdConf = cmd.config.sub[cmdName];
-	} else if (this.commandConfig[cmdName]) {
+	if (prevCmd.config && prevCmd.config.sub && prevCmd.config.sub[cmdName]) {
+		cmdConf = prevCmd.config.sub[cmdName];
+	} else if (!prevCmd.config && this.commandConfig[cmdName]) {
 		cmdConf = this.commandConfig[cmdName];
 	} else {
-		if (this.config.ignoreUnknownCommands) {
-			// TODO: put skipped params somewhere
-			return;
-		}
+
+		// We have at least one positional argument, check for ignoreUnknownCommands
+		// if flag is set, fine, continue
+		positional.push (cmdName);
 
 		// TODO: append error
-		return true;
+		// Otherwise slice cmdList from current position and stop processing
+		if (!this.config.ignoreUnknownCommands) {
+			positional.push.apply (positional, cmdList.slice (idx + 1));
+			return true;
+		}
+
+		return;
 	}
 
-	cmd.config = cmdConf;
-	cmd.branch = cmd.branch || [];
-	cmd.branch.push (cmdName);
+	var cmd = {
+		token: cmdName,
+		config: cmdConf
+	};
 
-	if ("type" in cmdConf) {
+	commands.push (cmd);
+
+	return;
+
+	if (!cmdConf.run && !cmdConf.flow && !cmdConf.script) {
+		// TODO: show usage for that command
 		this.appendError (
-			this.l10nMessage ("commandDefinedAsOption"),
-			this.helpNamePresenter (cmdName),
+			this.l10nMessage ("commandHandlerMissing"),
 			this.helpNamePresenter (cmdName)
 		);
 		return true;
 	}
 
-	// walk command tree if any
-	if (!cmdConf.run && !cmdConf.flow && !cmdConf.script) {
-
-		if (!cmdList[idx + 1]) {
-			this.appendError (
-				this.l10nMessage ("commandHandlerMissing"),
-				this.helpNamePresenter (cmdName)
-			);
-			return true;
-		}
-
-		if (!cmdConf.sub || !cmdConf.sub[cmdList[idx + 1]]) {
-			this.appendError (
-				this.l10nMessage ("commandSubMissing"),
-				this.helpNamePresenter (cmdName),
-				this.helpNamePresenter (cmdList[idx + 1])
-			);
-			return true;
-		}
-
-		// found possible subcommand
-		return this.commandExists (cmd, cmdList[idx + 1], idx + 1, cmdList);
+	if (!cmdConf.sub || !cmdConf.sub[cmdList[idx + 1]]) {
+		this.appendError (
+			this.l10nMessage ("commandSubMissing"),
+			this.helpNamePresenter (cmdName),
+			this.helpNamePresenter (cmdList[idx + 1])
+		);
+		return true;
 	}
-
-	return cmd;
 }
 
 /**
@@ -418,7 +425,7 @@ ArgvParser.prototype.helpForCommand = function (cmd) {
 		""
 	];
 	if (cmd.config.usage) {
-		usage.push (cmd.config.usage, "");
+		usage = usage.concat (cmd.config.usage, "");
 	}
 	if (globalOptions.length) {
 		usage = usage.concat (
@@ -664,14 +671,53 @@ ArgvParser.prototype.findCommand = function (options) {
 	}
 	/////////////////////
 
-	var cmd = {};
+	var cmd;
 
-	argvRemains.some (this.commandExists.bind (this, cmd));
+	var commands = [];
+	var positional = [];
 
-	if (!cmd.config) {
+	argvRemains.some (this.commandExists.bind (this, commands, positional));
+
+	if (commands.length === 0) {
+		// TODO: maybe run something?
 		var usage = this.usage ();
 		return {usage: usage};
 	}
+
+	var branch = commands.map (function (_cmd) {return _cmd.token});
+
+	// from last found command to the first one, search for a runnable command
+	for (var cmdIdx = commands.length - 1; cmdIdx >= 0; cmdIdx --) {
+		cmd = commands[cmdIdx];
+		var cmdConf = cmd.config;
+
+		cmd.branch = branch;
+
+		if (!cmdConf.run && !cmdConf.flow && !cmdConf.script) {
+			if (!cmdConf.sub) {
+				// command here isn't runnable and don't have sub key to define subcommand
+				// TODO: correct message
+				this.appendError (
+					this.l10nMessage ("commandSubMissing"),
+					this.helpNamePresenter (cmd.token),
+					this.helpNamePresenter (cmd.token)
+				);
+
+				branch.pop ();
+
+				continue;
+			}
+
+			// show usage if we have found command, but command configuration
+			// isn't runnable
+			var usage = this.helpForCommand (cmd);
+			cmd.usage = usage;
+		}
+
+		break;
+	}
+
+	cmd.positional = positional;
 
 	var options = this.validateOptions (cmd, options);
 
@@ -714,7 +760,7 @@ ArgvParser.prototype.start = function (cmd, origin, cb) {
 	var cmdConf = cmd.config;
 
 	if (!origin)
-		origin = require.main;
+		origin = require.main.exports;
 
 	var data = {};
 
