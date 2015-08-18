@@ -146,6 +146,10 @@ function task (cmd, data, next) {
 
 ```
 
+Command objects usually contains `config` key with associated configuration structure,
+`branch` key with list of parsed command names, `positional` with positional parameters,
+`options` — list of applicable options, also `failedOptions` and `errors`
+
 Those tasks can be object methods, you just have to provide an origin as parameter to the `start` call.
 If origin is not provided, `require.main` is used instead (it is your main module exports).
 
