@@ -128,6 +128,8 @@ launcher.start (process.argv, require.main, function (cmd, data) {
 
 ### Command handler(s)
 
+#### Using list of tasks with `run` key
+
 Each command must have a handler, described by `run` key in [command configuration](#configuration-for-command).
 If handler is an array, then tasks launched one after one.
 
@@ -153,6 +155,49 @@ var theProgram = new Program ();
 
 launcher.start (null, theProgram, function (cmd, data) {
 });
+
+```
+
+#### Using external script with `script` key
+
+If you defined `script` key for command, this script will run. You can pass
+options as environment variables. Script's `stdout` and `stderr` you'll get via
+`data.scriptStderr` and `data.scriptStdout`. If command configuration contains
+`anyway` key, then script error will be written to the `data.scriptError` and
+callback will be called.
+
+```javascript
+
+var testConfig2 = {
+	options: {
+		BBB: {type: "string"},
+		DDD: {type: "string"}
+	},
+	commands: {
+		node: {
+			script: nodePath + " -e 'console.log (process.argv)' AAA=${BBB} CCC=${DDD}",
+			options: ["BBB", "DDD"]
+		}
+	}
+};
+
+var co = new CommOp (testConfig2);
+
+co.start (null, null, function (cmd, data) {
+	console.log (data.scriptStderr, data.scriptStdout)
+});
+
+```
+
+Also, if you need to launch different scripts on different OS'es,
+use next format:
+
+```javascript
+
+script: {
+	win32:  nodePath + " -e 'console.log (process.argv)' AAA=%BBB% CCC=%DDD%",
+	default: nodePath + " -e 'console.log (process.argv)' AAA=${BBB} CCC=${DDD}"
+}
 
 ```
 

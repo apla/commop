@@ -1,6 +1,10 @@
 var util = require ("util");
 var path = require ("path");
 
+var exec = require ('child_process').exec;
+
+var os   = require ('os');
+
 /**
  * Generic parser class for argv
  * @class
@@ -28,7 +32,8 @@ ArgvParser.l10nMessage = {
 	configKeysError: "configuration must contain 'options' and 'commands' keys",
 	unknownEnvMode: "unknown environment mode %s",
 	optionFoundInCommandButConfig: "can't find option '%s' for command '%s'",
-	optionImplied: "option '%s' implies option '%s' to be defined"
+	optionImplied: "option '%s' implies option '%s' to be defined",
+	commandScriptPlatformError: "command script configuration is object, but current platform name or 'default' not found"
 };
 
 ArgvParser.prototype.init = function (config) {
@@ -731,6 +736,49 @@ ArgvParser.prototype.findCommand = function (options) {
 	//}
 }
 
+ArgvParser.prototype.childProcessExec = function (cmd, data, next) {
+
+	var scriptName = cmd.config.script;
+	if (typeof scriptName === "object") {
+		if (scriptName[os.platform()]) {
+			scriptName = scriptName[os.platform()];
+		} else if (scriptName.default) {
+			scriptName = scriptName.default;
+		} else {
+			console.error ([
+				this.l10nMessage ("commandIntro") + " " +
+				cmd.branch.map (function (pathChunk) {return this.helpNamePresenter (pathChunk)}.bind (this)).join (" "),
+				"",
+				this.l10nMessage ("commandScriptPlatformError")
+			].join ("\n"));
+			return;
+		}
+	}
+
+	var child = exec (scriptName, {env: cmd.options}, function (error, stdout, stderr) {
+		// The callback gets the arguments (error, stdout, stderr).
+		// On success, error will be null. On error, error will be an instance
+		// of Error and error.code will be the exit code of the child process,
+		// and error.signal will be set to the signal that terminated the process.
+		// console.log('stdout: ' + stdout);
+		// console.log('stderr: ' + stderr);
+		if (error !== null) {
+			console.error (error);
+
+			if (!cmd.config.anyway)
+				return;
+
+			data.scriptError = error;
+		}
+
+		data.scriptStdout = stdout;
+		data.scriptStderr = stderr;
+
+		next ();
+
+	}.bind (this));
+}
+
 ArgvParser.prototype.start = function (cmd, origin, cb) {
 
 	// if we got argv, parse it first
@@ -765,7 +813,13 @@ ArgvParser.prototype.start = function (cmd, origin, cb) {
 	var data = {};
 
 	// TODO: add support for flow/script
-	var methodNames = [].concat (cmdConf.run);
+	var methodNames;
+	if (cmdConf.run) {
+		methodNames = [].concat (cmdConf.run);
+	} else if (cmdConf.script) {
+		methodNames = ["childProcessExec"];
+		origin = this;
+	}
 
 	var launchIdx = -1;
 
@@ -779,7 +833,9 @@ ArgvParser.prototype.start = function (cmd, origin, cb) {
 			);
 		launchIdx ++;
 		var methodName = methodNames[launchIdx];
-		if (methodName) {
+		if (typeof methodName === "function") {
+			methodName (cmd, data, launchNext);
+		} else if (methodName) {
 			origin[methodName] (cmd, data, launchNext);
 		} else {
 			cb (cmd, data);

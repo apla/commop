@@ -65,5 +65,33 @@ describe (baseName+" parsing command subtree when parent contains run key", func
 		assert (cmd.branch[0] === "boards", "parent branch is fine");
 		assert (cmd.branch[1] === "add", "child branch is fine");
 	});
+});
 
+describe (baseName+" launching command using shell expansion", function () {
+	it ("have config", function (done) {
+
+		var nodePath = process.argv[0];
+
+		var testConfig2 = {
+			options: {
+				xxx: {type: "boolean"},
+				BBB: {type: "string"},
+				DDD: {type: "string"}
+			},
+			commands: {
+				node: {
+					script: nodePath + " -e 'console.log (process.argv)' AAA=${BBB} CCC=${DDD}",
+					options: ["BBB", "DDD"]
+				}
+			}
+		};
+		testConfig2.ignoreUnknownCommands = true;
+		var commop = new OptionParser (testConfig2);
+
+		commop.start (["node", "--BBB", "123", "--DDD", "asdfg"], null, function (cmd, data) {
+			assert (data.scriptStdout.match (/AAA=123/), "shell expansion ok");
+			assert (data.scriptStdout.match (/CCC=asdfg/), "shell expansion 2 ok");
+			done();
+		});
+	});
 });
