@@ -66,7 +66,7 @@ launcher.start (); // process.argv, module.exports
 
 ```
 
-I had to create cli for arduino supporting ommands like `compile`, `upload` and `platform`.
+I had to create cli for arduino supporting commands like `compile`, `upload` and `platform`.
 Each task should have `verbose` and `arduino` options.
 And `compile` and `upload` commands should have `sketch` and `board` options.
 Afterall `compile` must be configurable via `-D`, includes via `-I` options.
@@ -131,7 +131,8 @@ launcher.start (process.argv, require.main, function (cmd, data) {
 #### Using list of tasks with `run` key
 
 Each command must have a handler, described by `run` key in [command configuration](#configuration-for-command).
-If handler is an array, then tasks launched one after one.
+If handler is an array, then tasks launched one after one. Task laso can be a promise or function,
+which return a promise.
 
 ```javascript
 /**
@@ -149,6 +150,10 @@ function task (cmd, data, next) {
 Command objects usually contains `config` key with associated configuration structure,
 `branch` key with list of parsed command names, `positional` with positional parameters,
 `options` — list of applicable options, also `failedOptions` and `errors`
+
+Data should be modified and returned via `next` callback or promise's resolve.
+Next task will be launched regardless of return status of previous task.
+If your task rely on data from previous command, assert data section.
 
 Those tasks can be object methods, you just have to provide an origin as parameter to the `start` call.
 If origin is not provided, `require.main` is used instead (it is your main module exports).
@@ -225,12 +230,17 @@ usage will be displayed automatically. But you can override this behaviour.
 
 ```javascript
 
+// usage is displayed automatically unless showUsage is false
+launcher.showUsage = false;
+
 // usage will be displayed automatically if there is no commands in argv
 launcher.start ([], null, function (cmd, data) {
 	// we cannot find any commands
 	if ("usage" in cmd) {
-		// you can return false to skip usage output
-		return false;
+		// do something like this:
+		if (cmd.branch[0] === 'xxx') {
+			launcher.helpForCommand (["xxx"]);
+		}
 	}
 
 });
@@ -251,8 +261,6 @@ Also, you can provide your own help handler by setting `run` key for a `help` co
 // command help will be displayed automatically if you prefixed command with help keyword
 launcher.start (["help", "cmd"], null, function (cmd, data) {
 	if ("usage" in cmd) {
-		// you can return false to skip usage output
-		return false;
 	}
 });
 

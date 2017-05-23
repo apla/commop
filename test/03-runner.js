@@ -43,10 +43,11 @@ require.main.console = function (cmdConf, data, next) {
 describe (baseName+" execute command with", function () {
 
 	it ("no handler", function (done) {
+		optParser.showUsage = false;
 		var cmd = optParser.start ([], require.main, function (cmd, data) {
 			assert ("usage" in cmd, "no handler for no command, can display usage");
+			optParser.showUsage = true;
 			done();
-			return false;
 		});
 	});
 

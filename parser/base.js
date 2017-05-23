@@ -786,23 +786,21 @@ ArgvParser.prototype.start = function (cmd, origin, cb) {
 		cmd = this.findCommand (cmd);
 	}
 
-	if (!cb) cb = function () {}
-
 	if ("usage" in cmd) {
-		var showUsage = cb (cmd);
-		if (showUsage || showUsage === undefined)
+		if (this.showUsage || this.showUsage === undefined)
 			console.log (cmd.usage);
+		cb && cb (cmd);
 		return;
 	}
 
 	if (cmd.errors) {
-		var showErrors = cb (cmd);
-		if (showErrors || showErrors === undefined) {
+		if (this.showErrors || this.showErrors === undefined) {
 			cmd.errors.forEach (function (err) {
-				console.error (this.errorPresenter (pathChunk));
+				console.error (this.errorPresenter (err));
 			}.bind (this));
-			return;
 		}
+		cb && cb (cmd);
+		return;
 	}
 
 	var cmdConf = cmd.config;
