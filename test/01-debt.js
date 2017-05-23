@@ -2,6 +2,8 @@ var path   = require ('path');
 var fs     = require ('fs');
 var assert = require ('assert');
 
+require ('./promise-shim');
+
 var globalVerbose = process.env.VERBOSE || false;
 
 var files = [];

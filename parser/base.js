@@ -33,7 +33,8 @@ ArgvParser.l10nMessage = {
 	unknownEnvMode: "unknown environment mode %s",
 	optionFoundInCommandButConfig: "can't find option '%s' for command '%s'",
 	optionImplied: "option '%s' implies option '%s' to be defined",
-	commandScriptPlatformError: "command script configuration is object, but current platform name or 'default' not found"
+	commandScriptPlatformError: "command script configuration is object, but current platform name or 'default' not found",
+	functionNotFound: "function '%s' not found in origin"
 };
 
 ArgvParser.prototype.init = function (config) {
@@ -755,7 +756,18 @@ ArgvParser.prototype.childProcessExec = function (cmd, data, next) {
 		}
 	}
 
-	var child = exec (scriptName, {env: cmd.options}, function (error, stdout, stderr) {
+	var child;
+
+	var killScript = function () {
+		if (!child)
+			return;
+		child.kill ();
+		process.exit ();
+	};
+
+	process.on ('SIGINT', killScript);
+
+	child = exec (scriptName, {env: cmd.options}, function (error, stdout, stderr) {
 		// The callback gets the arguments (error, stdout, stderr).
 		// On success, error will be null. On error, error will be an instance
 		// of Error and error.code will be the exit code of the child process,
@@ -774,9 +786,13 @@ ArgvParser.prototype.childProcessExec = function (cmd, data, next) {
 		data.scriptStdout = stdout;
 		data.scriptStderr = stderr;
 
-		next ();
+		next (null, data);
 
 	}.bind (this));
+
+	child.on ('exit', function () {
+		child = undefined;
+	});
 }
 
 ArgvParser.prototype.start = function (cmd, origin, cb) {
@@ -808,7 +824,7 @@ ArgvParser.prototype.start = function (cmd, origin, cb) {
 	if (!origin)
 		origin = require.main.exports;
 
-	var data = {};
+	var _data = {};
 
 	// TODO: add support for flow/script
 	var methodNames;
@@ -819,29 +835,83 @@ ArgvParser.prototype.start = function (cmd, origin, cb) {
 		origin = this;
 	}
 
+
 	var launchIdx = -1;
 
-	var launchNext = function (err) {
-		// probably need to stop on error?
-		if (err)
-			this.appendError (
-				this.l10nMessage ("taskError"),
-				this.helpNamePresenter (methodNames[launchIdx]),
-				err
-			);
-		launchIdx ++;
-		var methodName = methodNames[launchIdx];
-		if (typeof methodName === "function") {
-			methodName (cmd, data, launchNext);
-		} else if (methodName) {
-			origin[methodName] (cmd, data, launchNext);
-		} else {
-			cb (cmd, data);
-		}
-	}.bind(this);
+	var _err;
 
-	launchNext (null);
+	var p = new Promise (function (resolve, reject) {
 
+		var launchNext = function (err, data) {
+			// probably need to stop on error?
+			if (err) {
+				_err = err;
+				this.appendError (
+					this.l10nMessage ("taskError"),
+					this.helpNamePresenter (methodNames[launchIdx]),
+					err
+				);
+			}
+			launchIdx ++;
+			var methodName = methodNames[launchIdx];
+			var cmdResult;
+
+			// methodName is actually a function
+			if (typeof methodName === "function") {
+				cmdResult = methodName (cmd, data, launchNext);
+			} else if (methodName) {
+				if (methodName in origin) {
+					if (typeof origin[methodName] === 'function') {
+						cmdResult = origin[methodName] (cmd, data, launchNext);
+					} else if (origin[methodName].then) {
+						cmdResult = origin[methodName];
+					} else {
+						this.appendError (
+							this.l10nMessage ("functionNotFound"),
+							this.helpNamePresenter (methodName)
+						);
+						return launchNext (null);
+					}
+				} else {
+					this.appendError (
+						this.l10nMessage ("functionNotFound"),
+						this.helpNamePresenter (methodName)
+					);
+					return launchNext (null);
+				}
+
+			} else {
+				if (cb) {
+					cb (cmd, data);
+				} else {
+					if (this.errors && this.errors.length) {
+						reject (new Error (this.errors[0]));
+					} else {
+						resolve ({
+							cmd:  cmd,
+							data: data
+						});
+					}
+				}
+			}
+
+			if (cmdResult && cmdResult.then) { // thenable
+				cmdResult.then (function (data) {
+					launchNext (null, data);
+				}, function (err) {
+					launchNext (err, data);
+				});
+			}
+		}.bind (this);
+
+		launchNext (null, _data);
+
+	}.bind (this));
+
+	if (!cb)
+		return p;
+
+	p.then (function () {});
 }
 
 module.exports = ArgvParser;

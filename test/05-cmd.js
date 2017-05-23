@@ -2,6 +2,8 @@ var path   = require ('path');
 var fs     = require ('fs');
 var assert = require ('assert');
 
+require ('./promise-shim');
+
 var parserModule = process.env.COMMOP_PARSER ? "../parser/" + process.env.COMMOP_PARSER : "../";
 
 var OptionParser = require (parserModule);
@@ -67,31 +69,3 @@ describe (baseName+" parsing command subtree when parent contains run key", func
 	});
 });
 
-describe (baseName+" launching command using shell expansion", function () {
-	it ("have config", function (done) {
-
-		var nodePath = process.argv[0];
-
-		var testConfig2 = {
-			options: {
-				xxx: {type: "boolean"},
-				BBB: {type: "string"},
-				DDD: {type: "string"}
-			},
-			commands: {
-				node: {
-					script: nodePath + " -e 'console.log (process.argv)' AAA=${BBB} CCC=${DDD}",
-					options: ["BBB", "DDD"]
-				}
-			}
-		};
-		testConfig2.ignoreUnknownCommands = true;
-		var commop = new OptionParser (testConfig2);
-
-		commop.start (["node", "--BBB", "123", "--DDD", "asdfg"], null, function (cmd, data) {
-			assert (data.scriptStdout.match (/AAA=123/), "shell expansion ok");
-			assert (data.scriptStdout.match (/CCC=asdfg/), "shell expansion 2 ok");
-			done();
-		});
-	});
-});

@@ -1,6 +1,6 @@
 {
 	"name": "commop",
-	"version": "1.2.0",
+	"version": "1.3.0",
 	"description": "cli interface for nodejs apps",
 	"main": "index.js",
 	"scripts": {
@@ -22,6 +22,7 @@
 	},
 	"homepage": "https://github.com/apla/commop",
 	"devDependencies": {
-		"mocha": "*"
+		"mocha": "^3.4.1",
+		"bluebird": "^3.5.0"
 	}
 }

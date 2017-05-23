@@ -3,6 +3,8 @@ var fs     = require ('fs');
 var assert = require ('assert');
 var util   = require ('util');
 
+require ('./promise-shim');
+
 var parserModule = process.env.COMMOP_PARSER ? "../parser/" + process.env.COMMOP_PARSER : "../";
 
 var OptionParser = require (parserModule);
